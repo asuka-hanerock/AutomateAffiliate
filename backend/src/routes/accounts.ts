@@ -135,6 +135,9 @@ router.put("/:id", async (req, res) => {
     data.xPremiumTier = req.body.xPremiumTier;
   if (req.body.maxCharsPerPost !== undefined)
     data.maxCharsPerPost = req.body.maxCharsPerPost;
+  if (req.body.discordWebhookUrl !== undefined)
+    data.discordWebhookUrl = req.body.discordWebhookUrl;
+  if (req.body.quoteRatio !== undefined) data.quoteRatio = req.body.quoteRatio;
   if (twitterApiKey !== undefined) data.twitterApiKey = encrypt(twitterApiKey);
   if (twitterApiSecret !== undefined)
     data.twitterApiSecret = encrypt(twitterApiSecret);

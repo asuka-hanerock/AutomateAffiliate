@@ -2,6 +2,7 @@ import { prisma } from "../utils/db";
 import { decrypt } from "../utils/crypto";
 import { createClient, postQuote } from "./twitter";
 import Anthropic from "@anthropic-ai/sdk";
+import { notifyDiscord } from "./discord";
 
 interface TweetData {
   id: string;
@@ -225,15 +226,29 @@ export async function runQuotePipeline(
   }
 
   // ログ保存
+  const status = dryRun ? "テスト" : tweetId ? "成功" : "失敗";
   await prisma.postLog.create({
     data: {
       accountId,
       topic: `引用: @${target.xUsername}`,
       content: JSON.stringify([quoteText]),
       tweetIds: tweetId ?? "",
-      status: dryRun ? "テスト" : tweetId ? "成功" : "失敗",
+      status,
     },
   });
+
+  // Discord通知
+  if (account.discordWebhookUrl) {
+    await notifyDiscord({
+      webhookUrl: account.discordWebhookUrl,
+      accountName: account.displayName,
+      topic: `引用: @${target.xUsername}`,
+      posts: [quoteText],
+      status,
+      tweetIds: tweetId ? [tweetId] : [],
+      isQuote: true,
+    });
+  }
 
   return {
     targetUsername: target.xUsername,

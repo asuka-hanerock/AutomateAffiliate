@@ -18,6 +18,8 @@ export default function AccountSettings({
     skipPreview: false,
     xPremiumTier: "none" as string,
     maxCharsPerPost: 140,
+    quoteRatio: 0,
+    discordWebhookUrl: "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -33,6 +35,8 @@ export default function AccountSettings({
           skipPreview: data.skipPreview ?? false,
           xPremiumTier: data.xPremiumTier ?? "none",
           maxCharsPerPost: data.maxCharsPerPost ?? 140,
+          quoteRatio: data.quoteRatio ?? 0,
+          discordWebhookUrl: data.discordWebhookUrl ?? "",
         });
       });
   }, [accountId]);
@@ -158,6 +162,68 @@ export default function AccountSettings({
         </select>
         <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>
           プレミアムに応じて文字数上限が自動設定されます
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 4,
+            fontSize: 14,
+            fontWeight: 500,
+          }}
+        >
+          引用ポスト比率
+        </label>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={10}
+            value={form.quoteRatio}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, quoteRatio: Number(e.target.value) }))
+            }
+            style={{ flex: 1 }}
+          />
+          <span style={{ fontSize: 14, fontWeight: 600, minWidth: 40 }}>
+            {form.quoteRatio}%
+          </span>
+        </div>
+        <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>
+          自動投稿のうち引用ポストの割合。0%=通常のみ
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 4,
+            fontSize: 14,
+            fontWeight: 500,
+          }}
+        >
+          Discord通知
+        </label>
+        <input
+          value={form.discordWebhookUrl}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, discordWebhookUrl: e.target.value }))
+          }
+          placeholder="https://discord.com/api/webhooks/..."
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            border: "1px solid #ccc",
+            borderRadius: 6,
+            fontSize: 14,
+          }}
+        />
+        <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>
+          投稿時にDiscordに通知を送ります。空欄で無効
         </div>
       </div>
 

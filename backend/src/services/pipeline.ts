@@ -5,6 +5,7 @@ import { selectTopic, generateThread } from "./claude";
 import { selectPrompt } from "./prompt-selector";
 import { postThread } from "./twitter";
 import { appendPostLog } from "./sheets";
+import { notifyDiscord } from "./discord";
 
 // 使用済み話題を直近30件保持（プロセス内メモリ）
 const usedTopics: string[] = [];
@@ -251,6 +252,7 @@ async function saveLog(
     displayName: string;
     googleServiceAccountJson: string;
     googleSpreadsheetUrl: string;
+    discordWebhookUrl: string;
     user: { email: string };
     niche: string;
   },
@@ -296,4 +298,16 @@ async function saveLog(
     console.log("[Pipeline] スプレッドシート未設定、スキップ");
   }
   console.log(`[Pipeline] ログ保存 (status=${status})`);
+
+  // Discord通知
+  if (account.discordWebhookUrl) {
+    await notifyDiscord({
+      webhookUrl: account.discordWebhookUrl,
+      accountName: account.displayName,
+      topic,
+      posts: allPosts,
+      status,
+      tweetIds,
+    });
+  }
 }
