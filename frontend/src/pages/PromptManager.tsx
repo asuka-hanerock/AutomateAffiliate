@@ -232,13 +232,57 @@ export default function PromptManager({ accountId, onBack }: Props) {
         ← アカウント詳細に戻る
       </button>
 
-      <h2 style={{ marginBottom: 16 }}>プロンプト管理</h2>
-      <p style={{ color: "#666", fontSize: 13, marginBottom: 20 }}>
-        プロンプトが未登録の場合はデフォルトのプロンプトが使われます。 変数:{" "}
-        {
-          "{{niche}}, {{date}}, {{sources}}, {{usedTopics}}, {{topic}}, {{pronoun}}, {{trademarkRule}}, {{ctaEnabled}}"
-        }
-      </p>
+      <h2 style={{ marginBottom: 8 }}>プロンプト管理</h2>
+
+      <div
+        style={{
+          background: "#f8f9fa",
+          border: "1px solid #e9ecef",
+          borderRadius: 8,
+          padding: 16,
+          marginBottom: 24,
+        }}
+      >
+        <p style={{ margin: "0 0 8px", fontSize: 14 }}>
+          投稿の内容やトーンをカスタマイズできます。プロンプトが未登録の場合はデフォルトが使われます。
+        </p>
+        <p style={{ margin: "0 0 8px", fontSize: 13, color: "#555" }}>
+          <strong>話題選定プロンプト</strong> —
+          どんなトピックを選ぶか（ニュースソースから1つ選ぶ指示）
+        </p>
+        <p style={{ margin: "0 0 12px", fontSize: 13, color: "#555" }}>
+          <strong>スレッド生成プロンプト</strong> —
+          選ばれたトピックからどんなスレッドを書くか（文体・構成の指示）
+        </p>
+        <details style={{ fontSize: 12, color: "#888" }}>
+          <summary style={{ cursor: "pointer" }}>使える変数一覧</summary>
+          <div
+            style={{
+              marginTop: 8,
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "4px 16px",
+            }}
+          >
+            <code>{"{{niche}}"}</code>
+            <span>ジャンル名</span>
+            <code>{"{{date}}"}</code>
+            <span>今日の日付</span>
+            <code>{"{{sources}}"}</code>
+            <span>トレンド＋ニュース一覧</span>
+            <code>{"{{usedTopics}}"}</code>
+            <span>使用済み話題リスト</span>
+            <code>{"{{topic}}"}</code>
+            <span>選ばれた話題</span>
+            <code>{"{{pronoun}}"}</code>
+            <span>一人称</span>
+            <code>{"{{trademarkRule}}"}</code>
+            <span>トレードマーク指示</span>
+            <code>{"{{ctaEnabled}}"}</code>
+            <span>CTA有無</span>
+          </div>
+        </details>
+      </div>
 
       {/* 話題選定プロンプト */}
       <div style={{ marginBottom: 24 }}>
