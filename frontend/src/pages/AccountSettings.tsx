@@ -4,9 +4,14 @@ import ScheduleEditor from "../components/ScheduleEditor";
 interface Props {
   accountId: string;
   onBack: () => void;
+  embedded?: boolean;
 }
 
-export default function AccountSettings({ accountId, onBack }: Props) {
+export default function AccountSettings({
+  accountId,
+  onBack,
+  embedded,
+}: Props) {
   const [form, setForm] = useState({
     cronSchedule: '[{"days":[],"time":"09:00"}]',
     ctaEnabled: false,
@@ -58,22 +63,25 @@ export default function AccountSettings({ accountId, onBack }: Props) {
 
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 500 }}>
-      <button
-        type="button"
-        onClick={onBack}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#1da1f2",
-          marginBottom: 16,
-          padding: 0,
-        }}
-      >
-        ← 戻る
-      </button>
-
-      <h2 style={{ marginBottom: 16 }}>運用設定</h2>
+      {!embedded && (
+        <>
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#1da1f2",
+              marginBottom: 16,
+              padding: 0,
+            }}
+          >
+            ← 戻る
+          </button>
+          <h2 style={{ marginBottom: 16 }}>運用設定</h2>
+        </>
+      )}
 
       {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
       {success && (

@@ -9,6 +9,7 @@ import syncProfileRouter from "./routes/sync-profile";
 import promptsRouter from "./routes/prompts";
 import formatsRouter from "./routes/formats";
 import analyzeFormatRouter from "./routes/analyze-format";
+import quoteTargetsRouter from "./routes/quote-targets";
 import { initScheduler } from "./scheduler/cron";
 
 const app = express();
@@ -26,6 +27,7 @@ app.use("/api/sync-profile", syncProfileRouter);
 app.use("/api/prompts", promptsRouter);
 app.use("/api/formats", formatsRouter);
 app.use("/api/analyze-format", analyzeFormatRouter);
+app.use("/api/quote-targets", quoteTargetsRouter);
 
 // ヘルスチェック
 app.get("/api/health", (_req, res) => {

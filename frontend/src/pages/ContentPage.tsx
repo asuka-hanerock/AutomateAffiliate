@@ -1,0 +1,83 @@
+import { useState } from "react";
+import PromptManager from "./PromptManager";
+import FormatManager from "./FormatManager";
+import QuoteTargetManager from "./QuoteTargetManager";
+
+interface Props {
+  accountId: string;
+  onBack: () => void;
+}
+
+const tabs = [
+  { key: "prompts", label: "プロンプト" },
+  { key: "formats", label: "流行構文" },
+  { key: "quotes", label: "引用対象" },
+] as const;
+
+type TabKey = (typeof tabs)[number]["key"];
+
+export default function ContentPage({ accountId, onBack }: Props) {
+  const [activeTab, setActiveTab] = useState<TabKey>("prompts");
+
+  return (
+    <div>
+      <button
+        onClick={onBack}
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: "#1da1f2",
+          marginBottom: 16,
+          padding: 0,
+        }}
+      >
+        ← 戻る
+      </button>
+
+      <h2 style={{ marginBottom: 16 }}>コンテンツ</h2>
+
+      {/* タブ */}
+      <div
+        style={{
+          display: "flex",
+          gap: 0,
+          borderBottom: "2px solid #e0e0e0",
+          marginBottom: 20,
+        }}
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            style={{
+              padding: "10px 20px",
+              border: "none",
+              borderBottom:
+                activeTab === tab.key
+                  ? "2px solid #794bc4"
+                  : "2px solid transparent",
+              background: "none",
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: activeTab === tab.key ? 600 : 400,
+              color: activeTab === tab.key ? "#794bc4" : "#666",
+              marginBottom: -2,
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* タブコンテンツ */}
+      {activeTab === "prompts" && (
+        <PromptManager accountId={accountId} onBack={() => {}} embedded />
+      )}
+      {activeTab === "formats" && (
+        <FormatManager accountId={accountId} onBack={() => {}} embedded />
+      )}
+      {activeTab === "quotes" && <QuoteTargetManager accountId={accountId} />}
+    </div>
+  );
+}

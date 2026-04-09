@@ -22,6 +22,25 @@ function createClient(credentials: TwitterCredentials): Client {
   return new Client({ oauth1: auth });
 }
 
+export { type TwitterCredentials, createClient };
+
+// 引用ポスト投稿
+export async function postQuote(
+  credentials: TwitterCredentials,
+  text: string,
+  quoteTweetId: string,
+): Promise<string> {
+  const client = createClient(credentials);
+  const result = await client.posts.create({
+    text,
+    quoteTweetId,
+  });
+  const id = (result as { data?: { id?: string } }).data?.id;
+  if (!id) throw new Error("引用ポストのIDが取得できませんでした");
+  console.log(`[X] 引用ポスト完了 (id: ${id})`);
+  return id;
+}
+
 export async function postThread(
   credentials: TwitterCredentials,
   posts: string[],

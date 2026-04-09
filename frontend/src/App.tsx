@@ -2,20 +2,15 @@ import { useState } from "react";
 import AccountList from "./pages/AccountList";
 import AccountForm from "./pages/AccountForm";
 import AccountDetail from "./pages/AccountDetail";
-import AccountSettings from "./pages/AccountSettings";
-import AccountApiKeys from "./pages/AccountApiKeys";
-import PromptManager from "./pages/PromptManager";
-import FormatManager from "./pages/FormatManager";
+import SettingsPage from "./pages/SettingsPage";
+import ContentPage from "./pages/ContentPage";
 
 type View =
   | { page: "list" }
   | { page: "create" }
-  | { page: "edit"; id: string }
   | { page: "detail"; id: string }
   | { page: "settings"; id: string }
-  | { page: "apikeys"; id: string }
-  | { page: "prompts"; id: string }
-  | { page: "formats"; id: string };
+  | { page: "content"; id: string };
 
 export default function App() {
   const [view, setView] = useState<View>({ page: "list" });
@@ -55,49 +50,28 @@ export default function App() {
       {view.page === "list" && (
         <AccountList
           onSelect={(id) => setView({ page: "detail", id })}
-          onEdit={(id) => setView({ page: "edit", id })}
+          onEdit={(id) => setView({ page: "settings", id })}
         />
       )}
       {view.page === "create" && (
         <AccountForm onDone={() => setView({ page: "list" })} />
       )}
-      {view.page === "edit" && (
-        <AccountForm
-          accountId={view.id}
-          onDone={() => setView({ page: "detail", id: view.id })}
-        />
-      )}
       {view.page === "detail" && (
         <AccountDetail
           accountId={view.id}
           onBack={() => setView({ page: "list" })}
-          onEdit={(id) => setView({ page: "edit", id })}
           onSettings={(id) => setView({ page: "settings", id })}
-          onApiKeys={(id) => setView({ page: "apikeys", id })}
-          onPrompts={(id) => setView({ page: "prompts", id })}
-          onFormats={(id) => setView({ page: "formats", id })}
+          onContent={(id) => setView({ page: "content", id })}
         />
       )}
       {view.page === "settings" && (
-        <AccountSettings
+        <SettingsPage
           accountId={view.id}
           onBack={() => setView({ page: "detail", id: view.id })}
         />
       )}
-      {view.page === "apikeys" && (
-        <AccountApiKeys
-          accountId={view.id}
-          onBack={() => setView({ page: "detail", id: view.id })}
-        />
-      )}
-      {view.page === "prompts" && (
-        <PromptManager
-          accountId={view.id}
-          onBack={() => setView({ page: "detail", id: view.id })}
-        />
-      )}
-      {view.page === "formats" && (
-        <FormatManager
+      {view.page === "content" && (
+        <ContentPage
           accountId={view.id}
           onBack={() => setView({ page: "detail", id: view.id })}
         />

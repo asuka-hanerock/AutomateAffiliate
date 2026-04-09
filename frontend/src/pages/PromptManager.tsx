@@ -14,6 +14,7 @@ interface Prompt {
 interface Props {
   accountId: string;
   onBack: () => void;
+  embedded?: boolean;
 }
 
 const typeLabels: Record<string, string> = {
@@ -72,7 +73,7 @@ CTAあり: {{ctaEnabled}}
 出力形式（JSON のみ）：
 {"posts": ["1投稿目", "2投稿目", "3投稿目", "4投稿目", "5投稿目"], "cta": "CTA文。不要なら空文字"}`;
 
-export default function PromptManager({ accountId, onBack }: Props) {
+export default function PromptManager({ accountId, onBack, embedded }: Props) {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [editing, setEditing] = useState<Prompt | null>(null);
   const [creating, setCreating] = useState(false);
@@ -227,20 +228,23 @@ export default function PromptManager({ accountId, onBack }: Props) {
 
   return (
     <div>
-      <button
-        onClick={onBack}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#1da1f2",
-          marginBottom: 16,
-        }}
-      >
-        ← アカウント詳細に戻る
-      </button>
-
-      <h2 style={{ marginBottom: 8 }}>プロンプト管理</h2>
+      {!embedded && (
+        <>
+          <button
+            onClick={onBack}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#1da1f2",
+              marginBottom: 16,
+            }}
+          >
+            ← アカウント詳細に戻る
+          </button>
+          <h2 style={{ marginBottom: 8 }}>プロンプト管理</h2>
+        </>
+      )}
 
       <div
         style={{

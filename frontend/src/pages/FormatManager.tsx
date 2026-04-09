@@ -13,9 +13,10 @@ interface TrendFormat {
 interface Props {
   accountId: string;
   onBack: () => void;
+  embedded?: boolean;
 }
 
-export default function FormatManager({ accountId, onBack }: Props) {
+export default function FormatManager({ accountId, onBack, embedded }: Props) {
   const [formats, setFormats] = useState<TrendFormat[]>([]);
   const [editing, setEditing] = useState<TrendFormat | null>(null);
   const [creating, setCreating] = useState(false);
@@ -149,19 +150,21 @@ export default function FormatManager({ accountId, onBack }: Props) {
 
   return (
     <div style={{ maxWidth: 600 }}>
-      <button
-        onClick={onBack}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#1da1f2",
-          marginBottom: 16,
-          padding: 0,
-        }}
-      >
-        ← 戻る
-      </button>
+      {!embedded && (
+        <button
+          onClick={onBack}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "#1da1f2",
+            marginBottom: 16,
+            padding: 0,
+          }}
+        >
+          ← 戻る
+        </button>
+      )}
 
       <div
         style={{
@@ -171,7 +174,8 @@ export default function FormatManager({ accountId, onBack }: Props) {
           marginBottom: 16,
         }}
       >
-        <h2 style={{ margin: 0 }}>流行構文テンプレート</h2>
+        {!embedded && <h2 style={{ margin: 0 }}>流行構文テンプレート</h2>}
+        {embedded && <div />}
         {!creating && !editing && (
           <button
             onClick={startCreate}

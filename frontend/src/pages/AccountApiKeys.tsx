@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 interface Props {
   accountId: string;
   onBack: () => void;
+  embedded?: boolean;
 }
 
-export default function AccountApiKeys({ accountId, onBack }: Props) {
+export default function AccountApiKeys({ accountId, onBack, embedded }: Props) {
   const [form, setForm] = useState({
     twitterApiKey: "",
     twitterApiSecret: "",
@@ -80,22 +81,25 @@ export default function AccountApiKeys({ accountId, onBack }: Props) {
 
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 500 }}>
-      <button
-        type="button"
-        onClick={onBack}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#1da1f2",
-          marginBottom: 16,
-          padding: 0,
-        }}
-      >
-        ← 戻る
-      </button>
-
-      <h2 style={{ marginBottom: 16 }}>API連携</h2>
+      {!embedded && (
+        <>
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#1da1f2",
+              marginBottom: 16,
+              padding: 0,
+            }}
+          >
+            ← 戻る
+          </button>
+          <h2 style={{ marginBottom: 16 }}>API連携</h2>
+        </>
+      )}
       <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>
         空欄のキーは既存の値が維持されます
       </p>

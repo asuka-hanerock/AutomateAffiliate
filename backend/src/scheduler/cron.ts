@@ -1,6 +1,33 @@
 import cron from "node-cron";
 import { prisma } from "../utils/db";
 import { runPipeline } from "../services/pipeline";
+import { runQuotePipeline } from "../services/quote-pipeline";
+
+// quoteRatioに基づいて通常or引用を選んで実行
+async function runAutoPost(accountId: string) {
+  const account = await prisma.account.findUnique({
+    where: { id: accountId },
+    select: { quoteRatio: true },
+  });
+  const ratio = account?.quoteRatio ?? 0;
+  const isQuote = Math.random() * 100 < ratio;
+
+  if (isQuote) {
+    console.log(`[Scheduler] 引用ポスト実行: ${accountId}`);
+    try {
+      const result = await runQuotePipeline(accountId);
+      if (!result) {
+        console.log("[Scheduler] 引用対象なし、通常ポストにフォールバック");
+        await runPipeline(accountId);
+      }
+    } catch (err) {
+      console.error(`[Scheduler] 引用ポスト失敗、通常にフォールバック:`, err);
+      await runPipeline(accountId);
+    }
+  } else {
+    await runPipeline(accountId);
+  }
+}
 
 // accountId -> cleanup functions
 const jobs = new Map<string, (() => void)[]>();
@@ -88,7 +115,7 @@ function scheduleRandomPosts(
           `[Scheduler] ランダム実行: ${accountId} (${execTime.toLocaleTimeString("ja-JP")})`,
         );
         try {
-          await runPipeline(accountId);
+          await runAutoPost(accountId);
         } catch (err) {
           console.error(`[Scheduler] ジョブ失敗: ${accountId}`, err);
         }
@@ -163,7 +190,7 @@ export function scheduleAccount(accountId: string, cronSchedule: string): void {
       const task = cron.schedule(time, async () => {
         console.log(`[Scheduler] ジョブ実行: ${accountId}`);
         try {
-          await runPipeline(accountId);
+          await runAutoPost(accountId);
         } catch (err) {
           console.error(`[Scheduler] ジョブ失敗: ${accountId}`, err);
         }
@@ -192,7 +219,7 @@ export function scheduleAccount(accountId: string, cronSchedule: string): void {
     const task = cron.schedule(cronExpr, async () => {
       console.log(`[Scheduler] ジョブ実行: ${accountId} (${dayLabel} ${time})`);
       try {
-        await runPipeline(accountId);
+        await runAutoPost(accountId);
       } catch (err) {
         console.error(`[Scheduler] ジョブ失敗: ${accountId}`, err);
       }

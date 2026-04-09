@@ -41,11 +41,8 @@ interface PreviewData {
 interface Props {
   accountId: string;
   onBack: () => void;
-  onEdit: (id: string) => void;
   onSettings: (id: string) => void;
-  onApiKeys: (id: string) => void;
-  onPrompts: (id: string) => void;
-  onFormats: (id: string) => void;
+  onContent: (id: string) => void;
 }
 
 const statusLabel: Record<string, { text: string; color: string }> = {
@@ -86,11 +83,8 @@ function formatSchedule(cronSchedule: string): string {
 export default function AccountDetail({
   accountId,
   onBack,
-  onEdit,
   onSettings,
-  onApiKeys,
-  onPrompts,
-  onFormats,
+  onContent,
 }: Props) {
   const [account, setAccount] = useState<AccountData | null>(null);
   const [running, setRunning] = useState<"run" | "test" | false>(false);
@@ -746,20 +740,6 @@ export default function AccountDetail({
           </button>
           <div style={{ flex: 1 }} />
           <button
-            onClick={() => onEdit(accountId)}
-            style={{
-              background: "#fff",
-              border: "1px solid #ccc",
-              color: "#333",
-              borderRadius: 8,
-              padding: "10px 16px",
-              cursor: "pointer",
-              fontSize: 13,
-            }}
-          >
-            プロフィール
-          </button>
-          <button
             onClick={() => onSettings(accountId)}
             style={{
               background: "#fff",
@@ -769,26 +749,13 @@ export default function AccountDetail({
               padding: "10px 16px",
               cursor: "pointer",
               fontSize: 13,
+              fontWeight: 600,
             }}
           >
-            投稿設定
+            設定
           </button>
           <button
-            onClick={() => onPrompts(accountId)}
-            style={{
-              background: "#fff",
-              border: "1px solid #f7931a",
-              color: "#f7931a",
-              borderRadius: 8,
-              padding: "10px 16px",
-              cursor: "pointer",
-              fontSize: 13,
-            }}
-          >
-            プロンプト管理
-          </button>
-          <button
-            onClick={() => onFormats(accountId)}
+            onClick={() => onContent(accountId)}
             style={{
               background: "#fff",
               border: "1px solid #794bc4",
@@ -797,23 +764,10 @@ export default function AccountDetail({
               padding: "10px 16px",
               cursor: "pointer",
               fontSize: 13,
+              fontWeight: 600,
             }}
           >
-            流行構文
-          </button>
-          <button
-            onClick={() => onApiKeys(accountId)}
-            style={{
-              background: "#fff",
-              border: "1px solid #888",
-              color: "#888",
-              borderRadius: 8,
-              padding: "10px 16px",
-              cursor: "pointer",
-              fontSize: 13,
-            }}
-          >
-            API連携
+            コンテンツ
           </button>
         </div>
 
