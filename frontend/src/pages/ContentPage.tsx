@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PromptManager from "./PromptManager";
 import FormatManager from "./FormatManager";
 import QuoteTargetManager from "./QuoteTargetManager";
@@ -18,6 +18,15 @@ type TabKey = (typeof tabs)[number]["key"];
 
 export default function ContentPage({ accountId, onBack }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("prompts");
+  const [xPremiumTier, setXPremiumTier] = useState("none");
+
+  useEffect(() => {
+    fetch(`/api/accounts/${accountId}`)
+      .then((r) => r.json())
+      .then((data) => setXPremiumTier(data.xPremiumTier ?? "none"));
+  }, [accountId]);
+
+  const isPremium = xPremiumTier !== "none";
 
   return (
     <div>
@@ -46,28 +55,38 @@ export default function ContentPage({ accountId, onBack }: Props) {
           marginBottom: 20,
         }}
       >
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              padding: "10px 20px",
-              border: "none",
-              borderBottom:
-                activeTab === tab.key
-                  ? "2px solid #794bc4"
-                  : "2px solid transparent",
-              background: "none",
-              cursor: "pointer",
-              fontSize: 14,
-              fontWeight: activeTab === tab.key ? 600 : 400,
-              color: activeTab === tab.key ? "#794bc4" : "#666",
-              marginBottom: -2,
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const disabled = tab.key === "quotes" && !isPremium;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => !disabled && setActiveTab(tab.key)}
+              style={{
+                padding: "10px 20px",
+                border: "none",
+                borderBottom:
+                  activeTab === tab.key
+                    ? "2px solid #794bc4"
+                    : "2px solid transparent",
+                background: "none",
+                cursor: disabled ? "not-allowed" : "pointer",
+                fontSize: 14,
+                fontWeight: activeTab === tab.key ? 600 : 400,
+                color: disabled
+                  ? "#ccc"
+                  : activeTab === tab.key
+                    ? "#794bc4"
+                    : "#666",
+                marginBottom: -2,
+                opacity: disabled ? 0.5 : 1,
+              }}
+              title={disabled ? "Xプレミアムが必要です" : ""}
+            >
+              {tab.label}
+              {disabled && " 🔒"}
+            </button>
+          );
+        })}
       </div>
 
       {/* タブコンテンツ */}
@@ -77,7 +96,9 @@ export default function ContentPage({ accountId, onBack }: Props) {
       {activeTab === "formats" && (
         <FormatManager accountId={accountId} onBack={() => {}} embedded />
       )}
-      {activeTab === "quotes" && <QuoteTargetManager accountId={accountId} />}
+      {activeTab === "quotes" && (
+        <QuoteTargetManager accountId={accountId} isPremium={isPremium} />
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@ interface QuoteTarget {
 
 interface Props {
   accountId: string;
+  isPremium?: boolean;
 }
 
 interface Suggestion {
@@ -20,7 +21,10 @@ interface Suggestion {
   recentTweets: number;
 }
 
-export default function QuoteTargetManager({ accountId }: Props) {
+export default function QuoteTargetManager({
+  accountId,
+  isPremium = false,
+}: Props) {
   const [targets, setTargets] = useState<QuoteTarget[]>([]);
   const [newUsername, setNewUsername] = useState("");
   const [adding, setAdding] = useState(false);
@@ -102,6 +106,27 @@ export default function QuoteTargetManager({ accountId }: Props) {
     setSuggestions((s) => s.filter((x) => x.username !== username));
     load();
   };
+
+  if (!isPremium) {
+    return (
+      <div
+        style={{
+          textAlign: "center",
+          padding: "40px 20px",
+          color: "#999",
+        }}
+      >
+        <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+        <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>
+          Xプレミアムが必要です
+        </p>
+        <p style={{ fontSize: 13 }}>
+          引用ポスト機能を使うには、設定画面でXプレミアムTierを設定してください。
+          <br />X API従量課金プランも別途必要です。
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
