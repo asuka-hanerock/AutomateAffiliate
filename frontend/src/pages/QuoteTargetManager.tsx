@@ -11,10 +11,21 @@ interface Props {
   accountId: string;
 }
 
+interface Suggestion {
+  username: string;
+  name: string;
+  profileImageUrl: string;
+  followers: number;
+  score: number;
+  recentTweets: number;
+}
+
 export default function QuoteTargetManager({ accountId }: Props) {
   const [targets, setTargets] = useState<QuoteTarget[]>([]);
   const [newUsername, setNewUsername] = useState("");
   const [adding, setAdding] = useState(false);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const load = () => {
     fetch(`/api/quote-targets/${accountId}`)
@@ -54,11 +65,39 @@ export default function QuoteTargetManager({ accountId }: Props) {
     load();
   };
 
+  const handleFetchSuggestions = async () => {
+    setLoadingSuggestions(true);
+    setSuggestions([]);
+    try {
+      const res = await fetch(`/api/quote-targets/${accountId}/suggestions`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setSuggestions(data);
+      } else {
+        alert(data.error || "おすすめ取得に失敗しました");
+      }
+    } catch {
+      alert("通信エラー");
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleAddSuggestion = async (username: string) => {
+    await fetch("/api/quote-targets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountId, xUsername: username }),
+    });
+    setSuggestions((s) => s.filter((x) => x.username !== username));
+    load();
+  };
+
   return (
     <div>
       <p style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>
         引用対象のXアカウントを登録すると、伸びてるポストを自動で引用します（X
-        API Basic以上が必要）
+        API従量課金プランが必要）
       </p>
 
       {/* 追加フォーム */}
@@ -157,6 +196,110 @@ export default function QuoteTargetManager({ accountId }: Props) {
           </div>
         ))
       )}
+
+      {/* おすすめ */}
+      <div
+        style={{
+          marginTop: 24,
+          paddingTop: 16,
+          borderTop: "1px solid #eee",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
+          <h4 style={{ margin: 0, fontSize: 14 }}>おすすめアカウント</h4>
+          <button
+            onClick={handleFetchSuggestions}
+            disabled={loadingSuggestions}
+            style={{
+              background: "#1da1f2",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding: "6px 14px",
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+              opacity: loadingSuggestions ? 0.6 : 1,
+            }}
+          >
+            {loadingSuggestions ? "検索中..." : "ジャンルで検索"}
+          </button>
+        </div>
+
+        {suggestions.length === 0 && !loadingSuggestions && (
+          <p style={{ color: "#999", fontSize: 12 }}>
+            「ジャンルで検索」を押すと、同じジャンルで伸びてるアカウントを提案します
+          </p>
+        )}
+
+        {suggestions.map((s) => (
+          <div
+            key={s.username}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 12px",
+              border: "1px solid #e8f5fd",
+              borderRadius: 8,
+              marginBottom: 8,
+              background: "#f8fbff",
+            }}
+          >
+            {s.profileImageUrl ? (
+              <img
+                src={s.profileImageUrl}
+                alt=""
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "#1da1f2",
+                  flexShrink: 0,
+                }}
+              />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>{s.name}</div>
+              <div style={{ fontSize: 12, color: "#888" }}>
+                @{s.username} ・ {s.followers.toLocaleString()}フォロワー
+              </div>
+            </div>
+            <button
+              onClick={() => handleAddSuggestion(s.username)}
+              style={{
+                background: "#17bf63",
+                color: "#fff",
+                border: "none",
+                borderRadius: 6,
+                padding: "5px 12px",
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 600,
+                flexShrink: 0,
+              }}
+            >
+              追加
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
