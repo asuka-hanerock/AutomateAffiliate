@@ -148,13 +148,17 @@ export async function runPipeline(
     orderBy: { sortOrder: "asc" },
   });
   let selectedFormat: string | undefined;
-  let postCount = 5;
+  let postCount: number;
   if (activeFormats.length > 0) {
     const picked =
       activeFormats[Math.floor(Math.random() * activeFormats.length)];
     selectedFormat = picked.template;
     postCount = picked.postCount;
     console.log(`[Pipeline] 流行構文: ${picked.name} (${postCount}投稿)`);
+  } else {
+    // 構文未指定時はランダム（1〜6投稿）
+    postCount = Math.floor(Math.random() * 6) + 1;
+    console.log(`[Pipeline] 投稿数ランダム: ${postCount}投稿`);
   }
 
   const maxChars = account.maxCharsPerPost;

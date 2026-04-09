@@ -131,6 +131,8 @@ router.put("/:id", async (req, res) => {
   if (ctaEnabled !== undefined) data.ctaEnabled = ctaEnabled;
   if (req.body.skipPreview !== undefined)
     data.skipPreview = req.body.skipPreview;
+  if (req.body.xPremiumTier !== undefined)
+    data.xPremiumTier = req.body.xPremiumTier;
   if (req.body.maxCharsPerPost !== undefined)
     data.maxCharsPerPost = req.body.maxCharsPerPost;
   if (twitterApiKey !== undefined) data.twitterApiKey = encrypt(twitterApiKey);

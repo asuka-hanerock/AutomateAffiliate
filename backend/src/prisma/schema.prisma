@@ -26,10 +26,11 @@ model Account {
   niche     String    @default("転職")
   pronoun   String    @default("僕") // 一人称（僕、俺、私、自分、あだ名など）
   trademark String    @default("")  // トレードマーク絵文字（🐢など、任意）
+  xPremiumTier String @default("none") // none | premium | premium_plus
   cronSchedule String @default("0 9 * * *")
   ctaEnabled Boolean  @default(false)
   skipPreview Boolean @default(false) // trueなら「今すぐ実行」でもプレビューなし
-  maxCharsPerPost Int @default(140)   // 1投稿あたりの文字数上限（140=通常, 280=プレミアム等）
+  maxCharsPerPost Int @default(140)   // 1投稿あたりの文字数上限（自動設定 or 手動上書き）
 
   // 暗号化されたAPIキー
   twitterApiKey           String @default("")
@@ -47,6 +48,7 @@ model Account {
   postLogs  PostLog[]
   prompts   PromptTemplate[]
   trendFormats TrendFormat[]
+  quoteTargets QuoteTarget[]
 }
 
 model PostLog {
@@ -87,4 +89,15 @@ model TrendFormat {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model QuoteTarget {
+  id         String   @id @default(uuid())
+  accountId  String
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  xUsername  String   // 引用対象の@ユーザー名
+  xUserId    String   @default("") // X API上のユーザーID（Basic APIで取得）
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

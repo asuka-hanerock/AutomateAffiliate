@@ -11,6 +11,7 @@ export default function AccountSettings({ accountId, onBack }: Props) {
     cronSchedule: '[{"days":[],"time":"09:00"}]',
     ctaEnabled: false,
     skipPreview: false,
+    xPremiumTier: "none" as string,
     maxCharsPerPost: 140,
   });
   const [saving, setSaving] = useState(false);
@@ -25,6 +26,7 @@ export default function AccountSettings({ accountId, onBack }: Props) {
           cronSchedule: data.cronSchedule,
           ctaEnabled: data.ctaEnabled,
           skipPreview: data.skipPreview ?? false,
+          xPremiumTier: data.xPremiumTier ?? "none",
           maxCharsPerPost: data.maxCharsPerPost ?? 140,
         });
       });
@@ -118,13 +120,23 @@ export default function AccountSettings({ accountId, onBack }: Props) {
             fontWeight: 500,
           }}
         >
-          1投稿あたりの文字数上限
+          Xプレミアム
         </label>
         <select
-          value={form.maxCharsPerPost}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, maxCharsPerPost: Number(e.target.value) }))
-          }
+          value={form.xPremiumTier}
+          onChange={(e) => {
+            const tier = e.target.value;
+            const charMap: Record<string, number> = {
+              none: 140,
+              premium: 25000,
+              premium_plus: 25000,
+            };
+            setForm((f) => ({
+              ...f,
+              xPremiumTier: tier,
+              maxCharsPerPost: charMap[tier] ?? 140,
+            }));
+          }}
           style={{
             padding: "8px 12px",
             border: "1px solid #ccc",
@@ -132,12 +144,13 @@ export default function AccountSettings({ accountId, onBack }: Props) {
             fontSize: 14,
           }}
         >
-          <option value={140}>140文字（通常）</option>
-          <option value={280}>280文字（Xプレミアム）</option>
-          <option value={500}>500文字</option>
-          <option value={1000}>1,000文字</option>
-          <option value={25000}>25,000文字（Xプレミアム+）</option>
+          <option value="none">なし（140文字）</option>
+          <option value="premium">Premium（25,000文字）</option>
+          <option value="premium_plus">Premium+（25,000文字）</option>
         </select>
+        <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>
+          プレミアムに応じて文字数上限が自動設定されます
+        </div>
       </div>
 
       <div style={{ display: "flex", gap: 12, marginTop: 16 }}>

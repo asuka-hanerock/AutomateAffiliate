@@ -282,7 +282,7 @@ export default function FormatManager({ accountId, onBack }: Props) {
                 fontSize: 14,
               }}
             >
-              {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                 <option key={n} value={n}>
                   {n}投稿
                 </option>
