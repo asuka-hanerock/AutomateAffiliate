@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const MAX_CHARS = 140;
+const DEFAULT_MAX_CHARS = 140;
+const DEFAULT_POST_COUNT = 5;
 const MAX_RETRIES = 3;
 
 function applyVars(template: string, vars: Record<string, string>): string {
@@ -95,6 +96,9 @@ export async function generateThread(
   ctaEnabled: boolean,
   pronoun: string,
   trademark: string,
+  trendFormat?: string,
+  postCount: number = DEFAULT_POST_COUNT,
+  maxChars: number = DEFAULT_MAX_CHARS,
 ): Promise<ThreadResult> {
   const client = new Anthropic({ apiKey });
 
@@ -102,12 +106,19 @@ export async function generateThread(
     ? `\n- 「${trademark}」をスレッドの最初か最後に1回だけ自然に使うこと\n- 多用しないこと`
     : "\n- トレードマークなし";
 
+  const trendFormatText = trendFormat
+    ? `以下の構文・フォーマットに沿ってスレッドを構成すること:\n${trendFormat}`
+    : "指定なし。自由な構成でOK";
+
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const prompt = applyVars(promptTemplate, {
       niche,
       topic,
       pronoun,
       trademarkRule,
+      trendFormat: trendFormatText,
+      postCount: String(postCount),
+      maxChars: String(maxChars),
       date: getToday(),
       ctaEnabled: String(ctaEnabled),
     });
@@ -129,15 +140,17 @@ export async function generateThread(
       },
     };
 
-    if (!Array.isArray(parsed.posts) || parsed.posts.length !== 5) {
-      throw new Error("Thread must contain exactly 5 posts");
+    if (!Array.isArray(parsed.posts) || parsed.posts.length !== postCount) {
+      throw new Error(
+        `Thread must contain exactly ${postCount} posts, got ${parsed.posts?.length}`,
+      );
     }
 
     const allPosts = [...parsed.posts];
     if (parsed.cta && parsed.cta.trim() !== "") {
       allPosts.push(parsed.cta);
     }
-    const overLimit = allPosts.filter((p) => p.length > MAX_CHARS);
+    const overLimit = allPosts.filter((p) => p.length > maxChars);
 
     if (overLimit.length === 0) {
       console.log(`[Claude] 文字数OK (attempt ${attempt + 1})`);

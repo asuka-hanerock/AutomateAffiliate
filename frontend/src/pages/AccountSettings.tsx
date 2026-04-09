@@ -11,6 +11,7 @@ export default function AccountSettings({ accountId, onBack }: Props) {
     cronSchedule: '[{"days":[],"time":"09:00"}]',
     ctaEnabled: false,
     skipPreview: false,
+    maxCharsPerPost: 140,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -24,6 +25,7 @@ export default function AccountSettings({ accountId, onBack }: Props) {
           cronSchedule: data.cronSchedule,
           ctaEnabled: data.ctaEnabled,
           skipPreview: data.skipPreview ?? false,
+          maxCharsPerPost: data.maxCharsPerPost ?? 140,
         });
       });
   }, [accountId]);
@@ -105,6 +107,37 @@ export default function AccountSettings({ accountId, onBack }: Props) {
           />
           プレビューをスキップ（「今すぐ実行」で即投稿）
         </label>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 4,
+            fontSize: 14,
+            fontWeight: 500,
+          }}
+        >
+          1投稿あたりの文字数上限
+        </label>
+        <select
+          value={form.maxCharsPerPost}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, maxCharsPerPost: Number(e.target.value) }))
+          }
+          style={{
+            padding: "8px 12px",
+            border: "1px solid #ccc",
+            borderRadius: 6,
+            fontSize: 14,
+          }}
+        >
+          <option value={140}>140文字（通常）</option>
+          <option value={280}>280文字（Xプレミアム）</option>
+          <option value={500}>500文字</option>
+          <option value={1000}>1,000文字</option>
+          <option value={25000}>25,000文字（Xプレミアム+）</option>
+        </select>
       </div>
 
       <div style={{ display: "flex", gap: 12, marginTop: 16 }}>

@@ -27,24 +27,7 @@
 
 ## 次にやること（優先順）
 
-### 1. 投稿前プレビュー+承認フロー（最優先）
-**背景**: 「今すぐ実行」を押すと即投稿されるが、内容を確認してから投稿したい
-
-**実装方針**:
-- `POST /api/run` に `preview: true` オプション追加
-- preview=trueの場合: トレンド取得→話題選定→スレッド生成まで実行し、生成結果をレスポンスで返す（X投稿しない、DBにも保存しない）
-- フロントエンド: プレビューモーダルでスレッド内容を表示
-- 「投稿する」ボタンで `POST /api/run` を `confirm: true` + 生成済みpostsで呼ぶ
-- アカウント設定に `skipPreview: Boolean @default(false)` を追加
-- skipPreview=trueの場合は従来通り即投稿
-
-**変更ファイル**:
-- `backend/src/services/pipeline.ts` — preview/confirmモード追加
-- `backend/src/routes/run.ts` — preview/confirmパラメータ対応
-- `backend/src/prisma/schema.prisma` — Account.skipPreview追加
-- `frontend/src/pages/AccountDetail.tsx` — プレビューモーダルUI
-
-### 2. 流行構文テンプレート
+### 1. 流行構文テンプレート
 **背景**: Xで流行っている投稿構文（「〇〇な人の特徴」「〇〇、知らないとやばい」等）を登録して、スレッド生成時に使わせたい
 
 **実装方針**:
@@ -61,7 +44,7 @@
 - `backend/prompts/generate-thread.txt` — {{trendFormat}}変数追加
 - `frontend/src/pages/FormatManager.tsx` — 新規管理画面
 
-### 3. プロンプト改善（かめふくアカウント向け）
+### 2. プロンプト改善（かめふくアカウント向け）
 **背景**: 投稿内容が一般論的で差別化できていない
 
 **改善ポイント**:
@@ -76,7 +59,7 @@
 - `backend/src/prisma/schema.prisma` — Account.profileBio追加
 - `backend/src/services/claude.ts` — profileBio変数追加
 
-### 4. usedTopics永続化
+### 3. usedTopics永続化
 **背景**: backendリスタートで使用済み話題リストがリセットされる
 
 **実装方針**:
@@ -85,14 +68,6 @@
 
 **変更ファイル**:
 - `backend/src/services/pipeline.ts` — initUsedTopics関数追加
-
-### 5. 確認スキップ設定
-**背景**: cronの自動実行時はプレビュー不要なので、自動実行時は即投稿で良い
-
-**実装方針**:
-- cron.tsからの実行はpreviewなし（従来通り）
-- 管理画面の「今すぐ実行」はpreviewあり（デフォルト）
-- skipPreview=trueならpreviewなしで即投稿
 
 ---
 

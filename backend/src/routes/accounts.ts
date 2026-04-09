@@ -128,6 +128,10 @@ router.put("/:id", async (req, res) => {
   if (trademark !== undefined) data.trademark = trademark;
   if (cronSchedule !== undefined) data.cronSchedule = cronSchedule;
   if (ctaEnabled !== undefined) data.ctaEnabled = ctaEnabled;
+  if (req.body.skipPreview !== undefined)
+    data.skipPreview = req.body.skipPreview;
+  if (req.body.maxCharsPerPost !== undefined)
+    data.maxCharsPerPost = req.body.maxCharsPerPost;
   if (twitterApiKey !== undefined) data.twitterApiKey = encrypt(twitterApiKey);
   if (twitterApiSecret !== undefined)
     data.twitterApiSecret = encrypt(twitterApiSecret);

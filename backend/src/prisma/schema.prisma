@@ -28,6 +28,7 @@ model Account {
   cronSchedule String @default("0 9 * * *")
   ctaEnabled Boolean  @default(false)
   skipPreview Boolean @default(false) // trueなら「今すぐ実行」でもプレビューなし
+  maxCharsPerPost Int @default(140)   // 1投稿あたりの文字数上限（140=通常, 280=プレミアム等）
 
   // 暗号化されたAPIキー
   twitterApiKey           String @default("")
@@ -44,6 +45,7 @@ model Account {
   updatedAt DateTime  @updatedAt
   postLogs  PostLog[]
   prompts   PromptTemplate[]
+  trendFormats TrendFormat[]
 }
 
 model PostLog {
@@ -68,6 +70,20 @@ model PromptTemplate {
   scheduleConfig String @default("{}") // JSON: {"days":[1,3,5]} or {"interval":3}
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0) // ローテーション順
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TrendFormat {
+  id        String   @id @default(uuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name      String   // 表示名（例: 「〇〇な人の特徴」）
+  template  String   // テンプレート説明（例: 「{{topic}}な人の特徴」→ 特徴を5つ挙げるスレッド）
+  example   String   @default("") // 使用例（任意）
+  postCount Int      @default(5)  // この構文の投稿数（2〜10）
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -5,6 +5,7 @@ import AccountDetail from "./pages/AccountDetail";
 import AccountSettings from "./pages/AccountSettings";
 import AccountApiKeys from "./pages/AccountApiKeys";
 import PromptManager from "./pages/PromptManager";
+import FormatManager from "./pages/FormatManager";
 
 type View =
   | { page: "list" }
@@ -13,7 +14,8 @@ type View =
   | { page: "detail"; id: string }
   | { page: "settings"; id: string }
   | { page: "apikeys"; id: string }
-  | { page: "prompts"; id: string };
+  | { page: "prompts"; id: string }
+  | { page: "formats"; id: string };
 
 export default function App() {
   const [view, setView] = useState<View>({ page: "list" });
@@ -73,6 +75,7 @@ export default function App() {
           onSettings={(id) => setView({ page: "settings", id })}
           onApiKeys={(id) => setView({ page: "apikeys", id })}
           onPrompts={(id) => setView({ page: "prompts", id })}
+          onFormats={(id) => setView({ page: "formats", id })}
         />
       )}
       {view.page === "settings" && (
@@ -89,6 +92,12 @@ export default function App() {
       )}
       {view.page === "prompts" && (
         <PromptManager
+          accountId={view.id}
+          onBack={() => setView({ page: "detail", id: view.id })}
+        />
+      )}
+      {view.page === "formats" && (
+        <FormatManager
           accountId={view.id}
           onBack={() => setView({ page: "detail", id: view.id })}
         />

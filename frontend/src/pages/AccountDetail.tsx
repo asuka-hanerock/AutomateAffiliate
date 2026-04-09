@@ -45,6 +45,7 @@ interface Props {
   onSettings: (id: string) => void;
   onApiKeys: (id: string) => void;
   onPrompts: (id: string) => void;
+  onFormats: (id: string) => void;
 }
 
 const statusLabel: Record<string, { text: string; color: string }> = {
@@ -89,6 +90,7 @@ export default function AccountDetail({
   onSettings,
   onApiKeys,
   onPrompts,
+  onFormats,
 }: Props) {
   const [account, setAccount] = useState<AccountData | null>(null);
   const [running, setRunning] = useState<"run" | "test" | false>(false);
@@ -784,6 +786,20 @@ export default function AccountDetail({
             }}
           >
             プロンプト管理
+          </button>
+          <button
+            onClick={() => onFormats(accountId)}
+            style={{
+              background: "#fff",
+              border: "1px solid #794bc4",
+              color: "#794bc4",
+              borderRadius: 8,
+              padding: "10px 16px",
+              cursor: "pointer",
+              fontSize: 13,
+            }}
+          >
+            流行構文
           </button>
           <button
             onClick={() => onApiKeys(accountId)}

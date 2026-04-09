@@ -123,7 +123,24 @@ export async function runPipeline(
     usedTopics.shift();
   }
 
-  // 4. スレッド生成（140文字バリデーション+リトライ付き）
+  // 4. 流行構文テンプレート選択
+  const activeFormats = await prisma.trendFormat.findMany({
+    where: { accountId, isActive: true },
+    orderBy: { sortOrder: "asc" },
+  });
+  let selectedFormat: string | undefined;
+  let postCount = 5;
+  if (activeFormats.length > 0) {
+    const picked =
+      activeFormats[Math.floor(Math.random() * activeFormats.length)];
+    selectedFormat = picked.template;
+    postCount = picked.postCount;
+    console.log(`[Pipeline] 流行構文: ${picked.name} (${postCount}投稿)`);
+  }
+
+  const maxChars = account.maxCharsPerPost;
+
+  // 5. スレッド生成（文字数バリデーション+リトライ付き）
   console.log("[Pipeline] スレッド生成中...");
   const threadResult = await generateThread(
     claudeKey,
@@ -133,6 +150,9 @@ export async function runPipeline(
     account.ctaEnabled,
     account.pronoun,
     account.trademark,
+    selectedFormat,
+    postCount,
+    maxChars,
   );
   console.log(
     `[Pipeline] ${threadResult.posts.length}投稿を生成${threadResult.cta ? " + CTA" : ""}`,
