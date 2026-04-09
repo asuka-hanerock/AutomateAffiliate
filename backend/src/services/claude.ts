@@ -1,20 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
-import fs from "fs";
-import path from "path";
 
-const PROMPTS_DIR = path.join(__dirname, "../../prompts");
 const MAX_CHARS = 140;
 const MAX_RETRIES = 3;
 
-function loadPrompt(name: string, vars: Record<string, string>): string {
-  let template = fs.readFileSync(
-    path.join(PROMPTS_DIR, `${name}.txt`),
-    "utf-8",
-  );
+function applyVars(template: string, vars: Record<string, string>): string {
+  let result = template;
   for (const [key, value] of Object.entries(vars)) {
-    template = template.replaceAll(`{{${key}}}`, value);
+    result = result.replaceAll(`{{${key}}}`, value);
   }
-  return template;
+  return result;
 }
 
 function getToday(): string {
@@ -27,14 +21,10 @@ function getToday(): string {
 }
 
 function extractJson(text: string): string {
-  // JSON文字列内の生改行をエスケープしてからパース可能にする
-  // まずコードフェンスを除去し、JSON構造内の改行を\\nに変換
   let cleaned = text
     .replace(/```json\s*/g, "")
     .replace(/```\s*/g, "")
     .trim();
-  // JSON文字列値内の生改行を\\nにエスケープ
-  // "..." の中にある実際の改行を置換
   cleaned = cleaned.replace(/"([^"]*?)"/g, (match) => {
     return match.replace(/\n/g, "\\n");
   });
@@ -49,6 +39,7 @@ export interface TopicResult {
 
 export async function selectTopic(
   apiKey: string,
+  promptTemplate: string,
   niche: string,
   sources: string,
   usedTopics: string[],
@@ -59,7 +50,7 @@ export async function selectTopic(
       ? usedTopics.map((t, i) => `${i + 1}. ${t}`).join("\n")
       : "なし";
 
-  const prompt = loadPrompt("select-topic", {
+  const prompt = applyVars(promptTemplate, {
     niche,
     date: getToday(),
     sources,
@@ -85,6 +76,7 @@ export interface ThreadResult {
 
 export async function generateThread(
   apiKey: string,
+  promptTemplate: string,
   niche: string,
   topic: string,
   ctaEnabled: boolean,
@@ -98,7 +90,7 @@ export async function generateThread(
     : "\n- トレードマークなし";
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const prompt = loadPrompt("generate-thread", {
+    const prompt = applyVars(promptTemplate, {
       niche,
       topic,
       pronoun,
@@ -121,7 +113,6 @@ export async function generateThread(
       throw new Error("Thread must contain exactly 5 posts");
     }
 
-    // 140文字バリデーション
     const allPosts = [...parsed.posts];
     if (parsed.cta && parsed.cta.trim() !== "") {
       allPosts.push(parsed.cta);

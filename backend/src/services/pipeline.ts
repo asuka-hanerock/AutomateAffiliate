@@ -2,6 +2,7 @@ import { prisma } from "../utils/db";
 import { decrypt } from "../utils/crypto";
 import { fetchTopicSources } from "./trends";
 import { selectTopic, generateThread } from "./claude";
+import { selectPrompt } from "./prompt-selector";
 import { postThread } from "./twitter";
 import { appendPostLog } from "./sheets";
 
@@ -40,10 +41,15 @@ export async function runPipeline(
   const sources = await fetchTopicSources(account.niche);
   console.log("[Pipeline] 話題ソース取得完了");
 
-  // 2. 話題選定（使用済み話題を避ける）
+  // 2. プロンプト選択
+  const topicPrompt = await selectPrompt(accountId, "topic_select");
+  const threadPrompt = await selectPrompt(accountId, "thread_generate");
+
+  // 3. 話題選定（使用済み話題を避ける）
   console.log("[Pipeline] 話題選定中...");
   const topicResult = await selectTopic(
     claudeKey,
+    topicPrompt,
     account.niche,
     sources,
     usedTopics,
@@ -59,10 +65,11 @@ export async function runPipeline(
     usedTopics.shift();
   }
 
-  // 3. スレッド生成（140文字バリデーション+リトライ付き）
+  // 4. スレッド生成（140文字バリデーション+リトライ付き）
   console.log("[Pipeline] スレッド生成中...");
   const threadResult = await generateThread(
     claudeKey,
+    threadPrompt,
     account.niche,
     topic,
     account.ctaEnabled,

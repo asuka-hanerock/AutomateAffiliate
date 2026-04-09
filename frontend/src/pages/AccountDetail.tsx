@@ -28,6 +28,7 @@ interface Props {
   accountId: string;
   onBack: () => void;
   onEdit: (id: string) => void;
+  onPrompts: (id: string) => void;
 }
 
 const statusLabel: Record<string, { text: string; color: string }> = {
@@ -46,7 +47,12 @@ function getStatus(s: string) {
   return statusLabel[s] || { text: s, color: "#888" };
 }
 
-export default function AccountDetail({ accountId, onBack, onEdit }: Props) {
+export default function AccountDetail({
+  accountId,
+  onBack,
+  onEdit,
+  onPrompts,
+}: Props) {
   const [account, setAccount] = useState<AccountData | null>(null);
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<{
@@ -324,6 +330,20 @@ export default function AccountDetail({ accountId, onBack, onEdit }: Props) {
             }}
           >
             編集
+          </button>
+          <button
+            onClick={() => onPrompts(accountId)}
+            style={{
+              background: "#f7931a",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding: "8px 16px",
+              cursor: "pointer",
+              fontSize: 14,
+            }}
+          >
+            プロンプト管理
           </button>
           <button
             onClick={handleDeleteAccount}

@@ -2,12 +2,14 @@ import { useState } from "react";
 import AccountList from "./pages/AccountList";
 import AccountForm from "./pages/AccountForm";
 import AccountDetail from "./pages/AccountDetail";
+import PromptManager from "./pages/PromptManager";
 
 type View =
   | { page: "list" }
   | { page: "create" }
   | { page: "edit"; id: string }
-  | { page: "detail"; id: string };
+  | { page: "detail"; id: string }
+  | { page: "prompts"; id: string };
 
 export default function App() {
   const [view, setView] = useState<View>({ page: "list" });
@@ -64,6 +66,13 @@ export default function App() {
           accountId={view.id}
           onBack={() => setView({ page: "list" })}
           onEdit={(id) => setView({ page: "edit", id })}
+          onPrompts={(id) => setView({ page: "prompts", id })}
+        />
+      )}
+      {view.page === "prompts" && (
+        <PromptManager
+          accountId={view.id}
+          onBack={() => setView({ page: "detail", id: view.id })}
         />
       )}
     </div>
