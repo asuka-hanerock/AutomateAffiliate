@@ -70,11 +70,21 @@ export default function QuoteTargetManager({ accountId }: Props) {
     setSuggestions([]);
     try {
       const res = await fetch(`/api/quote-targets/${accountId}/suggestions`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(
+          data.error ||
+            "おすすめ取得に失敗しました。X API従量課金プランが必要です。",
+        );
+        return;
+      }
       const data = await res.json();
       if (Array.isArray(data)) {
-        setSuggestions(data);
-      } else {
-        alert(data.error || "おすすめ取得に失敗しました");
+        if (data.length === 0) {
+          alert("該当するアカウントが見つかりませんでした");
+        } else {
+          setSuggestions(data);
+        }
       }
     } catch {
       alert("通信エラー");

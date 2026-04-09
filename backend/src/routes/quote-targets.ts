@@ -166,7 +166,16 @@ router.get("/:accountId/suggestions", async (req, res) => {
     res.json(suggestions);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    res.status(500).json({ error: message });
+    const isApiError =
+      message.includes("403") ||
+      message.includes("401") ||
+      message.includes("Forbidden") ||
+      message.includes("Unauthorized");
+    res.status(isApiError ? 403 : 500).json({
+      error: isApiError
+        ? "X API従量課金プランが必要です。Free tierでは検索APIを利用できません。"
+        : message,
+    });
   }
 });
 
