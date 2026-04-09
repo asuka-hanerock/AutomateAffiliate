@@ -86,6 +86,7 @@ export default function PromptManager({ accountId, onBack }: Props) {
     sortOrder: 0,
   });
   const [saving, setSaving] = useState(false);
+  const [defaults, setDefaults] = useState<Record<string, string>>({});
 
   const load = () => {
     fetch(`/api/prompts/${accountId}`)
@@ -93,8 +94,15 @@ export default function PromptManager({ accountId, onBack }: Props) {
       .then(setPrompts);
   };
 
+  const loadDefaults = () => {
+    fetch("/api/prompts/defaults/all")
+      .then((r) => r.json())
+      .then(setDefaults);
+  };
+
   useEffect(() => {
     load();
+    loadDefaults();
   }, [accountId]);
 
   const resetForm = () => {
@@ -302,9 +310,37 @@ export default function PromptManager({ accountId, onBack }: Props) {
           </button>
         </div>
         {topicPrompts.length === 0 && (
-          <p style={{ color: "#888", fontSize: 13 }}>
-            デフォルトプロンプトを使用中
-          </p>
+          <div
+            style={{
+              border: "1px dashed #ccc",
+              borderRadius: 6,
+              padding: 12,
+              marginBottom: 8,
+            }}
+          >
+            <div style={{ fontSize: 13, color: "#888", marginBottom: 4 }}>
+              デフォルトプロンプトを使用中
+            </div>
+            <details style={{ fontSize: 12 }}>
+              <summary style={{ cursor: "pointer", color: "#1da1f2" }}>
+                デフォルトプロンプトを表示
+              </summary>
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  background: "#f8f8f8",
+                  padding: 8,
+                  borderRadius: 4,
+                  marginTop: 4,
+                  maxHeight: 300,
+                  overflow: "auto",
+                  fontSize: 11,
+                }}
+              >
+                {defaults.topic_select || "読み込み中..."}
+              </pre>
+            </details>
+          </div>
         )}
         {topicPrompts.map((p) => (
           <PromptCard
@@ -339,9 +375,37 @@ export default function PromptManager({ accountId, onBack }: Props) {
           </button>
         </div>
         {threadPrompts.length === 0 && (
-          <p style={{ color: "#888", fontSize: 13 }}>
-            デフォルトプロンプトを使用中
-          </p>
+          <div
+            style={{
+              border: "1px dashed #ccc",
+              borderRadius: 6,
+              padding: 12,
+              marginBottom: 8,
+            }}
+          >
+            <div style={{ fontSize: 13, color: "#888", marginBottom: 4 }}>
+              デフォルトプロンプトを使用中
+            </div>
+            <details style={{ fontSize: 12 }}>
+              <summary style={{ cursor: "pointer", color: "#1da1f2" }}>
+                デフォルトプロンプトを表示
+              </summary>
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  background: "#f8f8f8",
+                  padding: 8,
+                  borderRadius: 4,
+                  marginTop: 4,
+                  maxHeight: 300,
+                  overflow: "auto",
+                  fontSize: 11,
+                }}
+              >
+                {defaults.thread_generate || "読み込み中..."}
+              </pre>
+            </details>
+          </div>
         )}
         {threadPrompts.map((p) => (
           <PromptCard

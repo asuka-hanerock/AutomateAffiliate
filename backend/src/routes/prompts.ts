@@ -1,7 +1,23 @@
 import { Router } from "express";
 import { prisma } from "../utils/db";
+import fs from "fs";
+import path from "path";
 
 const router = Router();
+const PROMPTS_DIR = path.join(__dirname, "../../prompts");
+
+// デフォルトプロンプト取得
+router.get("/defaults/all", (_req, res) => {
+  const topicSelect = fs.readFileSync(
+    path.join(PROMPTS_DIR, "select-topic.txt"),
+    "utf-8",
+  );
+  const threadGenerate = fs.readFileSync(
+    path.join(PROMPTS_DIR, "generate-thread.txt"),
+    "utf-8",
+  );
+  res.json({ topic_select: topicSelect, thread_generate: threadGenerate });
+});
 
 // 一覧取得
 router.get("/:accountId", async (req, res) => {
