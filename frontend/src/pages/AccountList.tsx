@@ -1,5 +1,24 @@
 import { useEffect, useState } from "react";
 
+const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
+function formatSchedule(cronSchedule: string): string {
+  try {
+    const entries = JSON.parse(cronSchedule);
+    if (!Array.isArray(entries)) return cronSchedule;
+    return entries
+      .map((e: { days: number[]; time: string }) => {
+        const dayPart =
+          !e.days || e.days.length === 0
+            ? "毎日"
+            : e.days.map((d: number) => dayNames[d]).join("・");
+        return `${dayPart} ${e.time}`;
+      })
+      .join("、");
+  } catch {
+    return cronSchedule;
+  }
+}
+
 interface Account {
   id: string;
   displayName: string;
@@ -53,7 +72,7 @@ export default function AccountList({ onSelect, onEdit }: Props) {
               {a.displayName || a.user.email}
             </div>
             <div style={{ color: "#666", fontSize: 14, marginTop: 4 }}>
-              ジャンル: {a.niche} ／ Cron: {a.cronSchedule} ／ CTA:{" "}
+              ジャンル: {a.niche} ／ {formatSchedule(a.cronSchedule)} ／ CTA:{" "}
               {a.ctaEnabled ? "ON" : "OFF"}
             </div>
           </div>
