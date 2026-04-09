@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ScheduleEditor from "../components/ScheduleEditor";
 
 interface Props {
   accountId?: string;
@@ -13,7 +14,7 @@ export default function AccountForm({ accountId, onDone }: Props) {
     niche: "転職",
     pronoun: "僕",
     trademark: "",
-    cronSchedule: "0 9 * * *",
+    cronSchedule: '[{"days":[],"time":"09:00"}]',
     ctaEnabled: false,
     twitterApiKey: "",
     twitterApiSecret: "",
@@ -148,14 +149,10 @@ export default function AccountForm({ accountId, onDone }: Props) {
         />
       </Field>
 
-      <Field label="Cronスケジュール">
-        <input
-          value={form.cronSchedule}
-          onChange={(e) => set("cronSchedule", e.target.value)}
-          style={inputStyle}
-          placeholder="0 9 * * *"
-        />
-      </Field>
+      <ScheduleEditor
+        value={form.cronSchedule}
+        onChange={(v) => set("cronSchedule", v)}
+      />
 
       <Field label="">
         <label style={{ display: "flex", alignItems: "center", gap: 8 }}>

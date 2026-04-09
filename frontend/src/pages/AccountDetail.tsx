@@ -47,6 +47,26 @@ function getStatus(s: string) {
   return statusLabel[s] || { text: s, color: "#888" };
 }
 
+const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
+
+function formatSchedule(cronSchedule: string): string {
+  try {
+    const entries = JSON.parse(cronSchedule);
+    if (!Array.isArray(entries)) return cronSchedule;
+    return entries
+      .map((e: { days: number[]; time: string }) => {
+        const dayPart =
+          !e.days || e.days.length === 0
+            ? "毎日"
+            : e.days.map((d) => dayNames[d]).join("・");
+        return `${dayPart} ${e.time}`;
+      })
+      .join("、");
+  } catch {
+    return cronSchedule;
+  }
+}
+
 export default function AccountDetail({
   accountId,
   onBack,
@@ -272,7 +292,8 @@ export default function AccountDetail({
             一人称: <strong>{account.pronoun}</strong>
           </div>
           <div>
-            Cron: <strong>{account.cronSchedule}</strong>
+            スケジュール:{" "}
+            <strong>{formatSchedule(account.cronSchedule)}</strong>
           </div>
           <div>
             CTA: <strong>{account.ctaEnabled ? "ON" : "OFF"}</strong>
