@@ -2,6 +2,8 @@ import { useState } from "react";
 import AccountList from "./pages/AccountList";
 import AccountForm from "./pages/AccountForm";
 import AccountDetail from "./pages/AccountDetail";
+import AccountSettings from "./pages/AccountSettings";
+import AccountApiKeys from "./pages/AccountApiKeys";
 import PromptManager from "./pages/PromptManager";
 
 type View =
@@ -9,6 +11,8 @@ type View =
   | { page: "create" }
   | { page: "edit"; id: string }
   | { page: "detail"; id: string }
+  | { page: "settings"; id: string }
+  | { page: "apikeys"; id: string }
   | { page: "prompts"; id: string };
 
 export default function App() {
@@ -58,7 +62,7 @@ export default function App() {
       {view.page === "edit" && (
         <AccountForm
           accountId={view.id}
-          onDone={() => setView({ page: "list" })}
+          onDone={() => setView({ page: "detail", id: view.id })}
         />
       )}
       {view.page === "detail" && (
@@ -66,7 +70,21 @@ export default function App() {
           accountId={view.id}
           onBack={() => setView({ page: "list" })}
           onEdit={(id) => setView({ page: "edit", id })}
+          onSettings={(id) => setView({ page: "settings", id })}
+          onApiKeys={(id) => setView({ page: "apikeys", id })}
           onPrompts={(id) => setView({ page: "prompts", id })}
+        />
+      )}
+      {view.page === "settings" && (
+        <AccountSettings
+          accountId={view.id}
+          onBack={() => setView({ page: "detail", id: view.id })}
+        />
+      )}
+      {view.page === "apikeys" && (
+        <AccountApiKeys
+          accountId={view.id}
+          onBack={() => setView({ page: "detail", id: view.id })}
         />
       )}
       {view.page === "prompts" && (

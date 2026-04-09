@@ -27,6 +27,7 @@ model Account {
   trademark String    @default("")  // トレードマーク絵文字（🐢など、任意）
   cronSchedule String @default("0 9 * * *")
   ctaEnabled Boolean  @default(false)
+  skipPreview Boolean @default(false) // trueなら「今すぐ実行」でもプレビューなし
 
   // 暗号化されたAPIキー
   twitterApiKey           String @default("")

@@ -22,10 +22,14 @@ function formatSchedule(cronSchedule: string): string {
 interface Account {
   id: string;
   displayName: string;
+  profileImageUrl: string;
+  xUsername: string;
+  trademark: string;
   niche: string;
   cronSchedule: string;
   ctaEnabled: boolean;
   user: { email: string };
+  _count?: { postLogs: number };
 }
 
 interface Props {
@@ -33,7 +37,7 @@ interface Props {
   onEdit: (id: string) => void;
 }
 
-export default function AccountList({ onSelect, onEdit }: Props) {
+export default function AccountList({ onSelect }: Props) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,43 +57,118 @@ export default function AccountList({ onSelect, onEdit }: Props) {
     );
 
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {accounts.map((a) => (
         <div
           key={a.id}
+          onClick={() => onSelect(a.id)}
           style={{
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 12,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            borderRadius: 12,
+            overflow: "hidden",
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            transition: "box-shadow 0.2s, transform 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.15)";
+            e.currentTarget.style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+            e.currentTarget.style.transform = "translateY(0)";
           }}
         >
-          <div style={{ cursor: "pointer" }} onClick={() => onSelect(a.id)}>
-            <div style={{ fontWeight: 600, fontSize: 16 }}>
-              {a.displayName || a.user.email}
-            </div>
-            <div style={{ color: "#666", fontSize: 14, marginTop: 4 }}>
-              ジャンル: {a.niche} ／ {formatSchedule(a.cronSchedule)} ／ CTA:{" "}
-              {a.ctaEnabled ? "ON" : "OFF"}
-            </div>
-          </div>
-          <button
-            onClick={() => onEdit(a.id)}
+          {/* ヘッダー */}
+          <div
             style={{
-              background: "#f0f0f0",
-              border: "1px solid #ccc",
-              borderRadius: 4,
-              padding: "6px 12px",
-              cursor: "pointer",
+              background: "linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%)",
+              padding: "16px 20px",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
             }}
           >
-            編集
-          </button>
+            {a.profileImageUrl ? (
+              <img
+                src={a.profileImageUrl}
+                alt=""
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  border: "2px solid rgba(255,255,255,0.3)",
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 20,
+                  flexShrink: 0,
+                }}
+              >
+                {a.trademark ||
+                  (a.displayName || a.user.email)[0].toUpperCase()}
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 17 }}>
+                {a.displayName || a.user.email}
+              </div>
+              {a.xUsername && (
+                <div style={{ fontSize: 13, opacity: 0.8 }}>@{a.xUsername}</div>
+              )}
+            </div>
+          </div>
+
+          {/* 情報エリア */}
+          <div
+            style={{
+              padding: "12px 20px",
+              background: "#fff",
+              display: "flex",
+              gap: 24,
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <InfoChip label="ジャンル" value={a.niche} />
+            <InfoChip
+              label="スケジュール"
+              value={formatSchedule(a.cronSchedule)}
+            />
+            <InfoChip label="CTA" value={a.ctaEnabled ? "ON" : "OFF"} />
+          </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function InfoChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 10,
+          color: "#999",
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>
+        {value}
+      </div>
     </div>
   );
 }

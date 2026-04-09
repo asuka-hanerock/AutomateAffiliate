@@ -31,10 +31,16 @@ function extractJson(text: string): string {
   return cleaned;
 }
 
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
 export interface TopicResult {
   選択話題: string;
   選定理由: string;
   ソース: string;
+  usage: TokenUsage;
 }
 
 export async function selectTopic(
@@ -66,12 +72,19 @@ export async function selectTopic(
   const block = response.content[0];
   if (block.type !== "text") throw new Error("Unexpected response type");
   const parsed = JSON.parse(extractJson(block.text));
-  return parsed as TopicResult;
+  return {
+    ...parsed,
+    usage: {
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    },
+  } as TopicResult;
 }
 
 export interface ThreadResult {
   posts: string[];
   cta: string;
+  usage: TokenUsage;
 }
 
 export async function generateThread(
@@ -107,7 +120,14 @@ export async function generateThread(
 
     const block = response.content[0];
     if (block.type !== "text") throw new Error("Unexpected response type");
-    const parsed = JSON.parse(extractJson(block.text)) as ThreadResult;
+    const raw = JSON.parse(extractJson(block.text));
+    const parsed: ThreadResult = {
+      ...raw,
+      usage: {
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+      },
+    };
 
     if (!Array.isArray(parsed.posts) || parsed.posts.length !== 5) {
       throw new Error("Thread must contain exactly 5 posts");

@@ -20,14 +20,30 @@ interface AccountData {
   trademark: string;
   cronSchedule: string;
   ctaEnabled: boolean;
+  skipPreview: boolean;
   user: { email: string };
   postLogs: PostLog[];
+}
+
+interface PreviewData {
+  topic: string;
+  topicReason: string;
+  topicSource: string;
+  posts: string[];
+  cta: string | null;
+  cost?: {
+    inputTokens: number;
+    outputTokens: number;
+    estimatedCostUsd: number;
+  };
 }
 
 interface Props {
   accountId: string;
   onBack: () => void;
   onEdit: (id: string) => void;
+  onSettings: (id: string) => void;
+  onApiKeys: (id: string) => void;
   onPrompts: (id: string) => void;
 }
 
@@ -36,7 +52,6 @@ const statusLabel: Record<string, { text: string; color: string }> = {
   失敗: { text: "失敗", color: "#e0245e" },
   テスト: { text: "テスト", color: "#794bc4" },
   削除済: { text: "削除済", color: "#888" },
-  // 旧データ互換
   success: { text: "成功", color: "#17bf63" },
   failed: { text: "失敗", color: "#e0245e" },
   deleted: { text: "削除済", color: "#888" },
@@ -71,10 +86,12 @@ export default function AccountDetail({
   accountId,
   onBack,
   onEdit,
+  onSettings,
+  onApiKeys,
   onPrompts,
 }: Props) {
   const [account, setAccount] = useState<AccountData | null>(null);
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState<"run" | "test" | false>(false);
   const [runResult, setRunResult] = useState<{
     ok: boolean;
     message: string;
@@ -84,6 +101,9 @@ export default function AccountDetail({
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [preview, setPreview] = useState<PreviewData | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [showCost, setShowCost] = useState(false);
 
   const load = () => {
     fetch(`/api/accounts/${accountId}`)
@@ -99,8 +119,35 @@ export default function AccountDetail({
   }, [accountId]);
 
   const handleRun = async (dryRun: boolean) => {
-    setRunning(true);
+    setRunning(dryRun ? "test" : "run");
     setRunResult(null);
+
+    // skipPreviewがfalseで通常実行の場合はプレビューモード
+    if (!dryRun && account && !account.skipPreview) {
+      try {
+        const res = await fetch("/api/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accountId, preview: true }),
+        });
+        const data = await res.json();
+        if (res.ok && data.data) {
+          setPreview(data.data);
+        } else {
+          setRunResult({
+            ok: false,
+            message: data.error || "プレビュー取得失敗",
+          });
+        }
+      } catch {
+        setRunResult({ ok: false, message: "通信エラー" });
+      } finally {
+        setRunning(false);
+      }
+      return;
+    }
+
+    // dryRun or skipPreview=true: 従来通り
     try {
       const res = await fetch("/api/run", {
         method: "POST",
@@ -114,6 +161,31 @@ export default function AccountDetail({
       setRunResult({ ok: false, message: "通信エラー" });
     } finally {
       setRunning(false);
+    }
+  };
+
+  const handleConfirmPost = async () => {
+    if (!preview) return;
+    setConfirming(true);
+    try {
+      const res = await fetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId,
+          confirmPosts: preview.posts,
+          confirmTopic: preview.topic,
+          confirmCta: preview.cta,
+        }),
+      });
+      const data = await res.json();
+      setRunResult({ ok: res.ok, message: data.message || data.error });
+      setPreview(null);
+      load();
+    } catch {
+      setRunResult({ ok: false, message: "通信エラー" });
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -134,12 +206,6 @@ export default function AccountDetail({
     } finally {
       setSyncing(false);
     }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!confirm("このアカウントを削除しますか？")) return;
-    await fetch(`/api/accounts/${accountId}`, { method: "DELETE" });
-    onBack();
   };
 
   const handleDeleteTweets = async (postLogId: string, topic: string) => {
@@ -212,6 +278,315 @@ export default function AccountDetail({
 
   return (
     <div>
+      {/* プレビューモーダル */}
+      {preview && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => !confirming && setPreview(null)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 12,
+              width: "90%",
+              maxWidth: 560,
+              maxHeight: "85vh",
+              overflow: "auto",
+              padding: 0,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* モーダルヘッダー */}
+            <div
+              style={{
+                padding: "16px 20px",
+                borderBottom: "1px solid #e0e0e0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: 16 }}>投稿プレビュー</h3>
+              <button
+                onClick={() => setPreview(null)}
+                disabled={confirming}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 20,
+                  cursor: "pointer",
+                  color: "#888",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 話題情報 */}
+            <div
+              style={{
+                padding: "12px 20px",
+                background: "#f8f9fa",
+                borderBottom: "1px solid #e0e0e0",
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
+                {preview.topic}
+              </div>
+              <div style={{ fontSize: 12, color: "#666" }}>
+                {preview.topicReason} ({preview.topicSource})
+              </div>
+              {preview.cost && (
+                <div style={{ marginTop: 8 }}>
+                  <button
+                    onClick={() => setShowCost((v) => !v)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      fontSize: 11,
+                      color: "#1da1f2",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {showCost ? "コストを非表示 ▲" : "コストを表示 ▼"}
+                  </button>
+                  {showCost && (
+                    <div
+                      style={{
+                        marginTop: 4,
+                        fontSize: 11,
+                        color: "#666",
+                        display: "flex",
+                        gap: 12,
+                      }}
+                    >
+                      <span>
+                        入力: {preview.cost.inputTokens.toLocaleString()}tok
+                      </span>
+                      <span>
+                        出力: {preview.cost.outputTokens.toLocaleString()}tok
+                      </span>
+                      <span style={{ fontWeight: 600 }}>
+                        ≈ ${preview.cost.estimatedCostUsd.toFixed(4)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* スレッド内容 */}
+            <div style={{ padding: "16px 20px" }}>
+              <div
+                style={{
+                  borderLeft: "2px solid #cfd9de",
+                  marginLeft: 16,
+                  paddingLeft: 16,
+                }}
+              >
+                {preview.posts.map((post, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      paddingBottom: 12,
+                      marginBottom: 12,
+                      borderBottom:
+                        i < preview.posts.length - 1
+                          ? "1px solid #f0f0f0"
+                          : "none",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {account.profileImageUrl ? (
+                        <img
+                          src={account.profileImageUrl}
+                          alt=""
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            flexShrink: 0,
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            background: "#1da1f2",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#fff",
+                            fontSize: 14,
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {account.trademark ||
+                            (account.displayName ||
+                              account.user.email)[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <span style={{ fontWeight: 600, fontSize: 13 }}>
+                          {account.displayName ||
+                            account.user.email.split("@")[0]}
+                        </span>
+                        <span
+                          style={{
+                            color: "#888",
+                            fontSize: 12,
+                            marginLeft: 4,
+                          }}
+                        >
+                          {i + 1}/{preview.posts.length}
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                        whiteSpace: "pre-wrap",
+                        marginLeft: 38,
+                      }}
+                    >
+                      {post}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "#888",
+                        marginLeft: 38,
+                        marginTop: 4,
+                      }}
+                    >
+                      {post.length}文字
+                    </div>
+                  </div>
+                ))}
+                {preview.cta && (
+                  <div style={{ paddingBottom: 12 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        marginBottom: 4,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          background: "#f7931a",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          flexShrink: 0,
+                        }}
+                      >
+                        CTA
+                      </div>
+                      <span style={{ fontWeight: 600, fontSize: 13 }}>CTA</span>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                        whiteSpace: "pre-wrap",
+                        marginLeft: 38,
+                      }}
+                    >
+                      {preview.cta}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "#888",
+                        marginLeft: 38,
+                        marginTop: 4,
+                      }}
+                    >
+                      {preview.cta.length}文字
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* アクションボタン */}
+            <div
+              style={{
+                padding: "12px 20px",
+                borderTop: "1px solid #e0e0e0",
+                display: "flex",
+                gap: 8,
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                onClick={() => setPreview(null)}
+                disabled={confirming}
+                style={{
+                  background: "#fff",
+                  border: "1px solid #ccc",
+                  color: "#333",
+                  borderRadius: 8,
+                  padding: "10px 20px",
+                  cursor: "pointer",
+                  fontSize: 14,
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleConfirmPost}
+                disabled={confirming}
+                style={{
+                  background: "#17bf63",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "10px 20px",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  opacity: confirming ? 0.6 : 1,
+                }}
+              >
+                {confirming ? "投稿中..." : "投稿する"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <button
         onClick={onBack}
         style={{
@@ -335,7 +710,7 @@ export default function AccountDetail({
         >
           <button
             onClick={() => handleRun(false)}
-            disabled={running}
+            disabled={!!running}
             style={{
               background: "#17bf63",
               color: "#fff",
@@ -348,11 +723,11 @@ export default function AccountDetail({
               opacity: running ? 0.6 : 1,
             }}
           >
-            {running ? "実行中..." : "今すぐ実行"}
+            {running === "run" ? "生成中..." : "今すぐ実行"}
           </button>
           <button
             onClick={() => handleRun(true)}
-            disabled={running}
+            disabled={!!running}
             style={{
               background: "#794bc4",
               color: "#fff",
@@ -365,9 +740,37 @@ export default function AccountDetail({
               opacity: running ? 0.6 : 1,
             }}
           >
-            {running ? "実行中..." : "テスト"}
+            {running === "test" ? "実行中..." : "テスト"}
           </button>
           <div style={{ flex: 1 }} />
+          <button
+            onClick={() => onEdit(accountId)}
+            style={{
+              background: "#fff",
+              border: "1px solid #ccc",
+              color: "#333",
+              borderRadius: 8,
+              padding: "10px 16px",
+              cursor: "pointer",
+              fontSize: 13,
+            }}
+          >
+            プロフィール
+          </button>
+          <button
+            onClick={() => onSettings(accountId)}
+            style={{
+              background: "#fff",
+              border: "1px solid #1da1f2",
+              color: "#1da1f2",
+              borderRadius: 8,
+              padding: "10px 16px",
+              cursor: "pointer",
+              fontSize: 13,
+            }}
+          >
+            投稿設定
+          </button>
           <button
             onClick={() => onPrompts(accountId)}
             style={{
@@ -383,32 +786,18 @@ export default function AccountDetail({
             プロンプト管理
           </button>
           <button
-            onClick={() => onEdit(accountId)}
+            onClick={() => onApiKeys(accountId)}
             style={{
               background: "#fff",
-              border: "1px solid #ccc",
-              color: "#333",
+              border: "1px solid #888",
+              color: "#888",
               borderRadius: 8,
               padding: "10px 16px",
               cursor: "pointer",
               fontSize: 13,
             }}
           >
-            編集
-          </button>
-          <button
-            onClick={handleDeleteAccount}
-            style={{
-              background: "#fff",
-              border: "1px solid #e0245e",
-              color: "#e0245e",
-              borderRadius: 8,
-              padding: "10px 16px",
-              cursor: "pointer",
-              fontSize: 13,
-            }}
-          >
-            削除
+            API連携
           </button>
         </div>
 

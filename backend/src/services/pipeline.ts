@@ -10,10 +10,29 @@ import { appendPostLog } from "./sheets";
 const usedTopics: string[] = [];
 const MAX_USED_TOPICS = 30;
 
+export interface PreviewResult {
+  topic: string;
+  topicReason: string;
+  topicSource: string;
+  posts: string[];
+  cta: string | null;
+  cost: {
+    inputTokens: number;
+    outputTokens: number;
+    estimatedCostUsd: number;
+  };
+}
+
 export async function runPipeline(
   accountId: string,
   dryRun = false,
-): Promise<void> {
+  options?: {
+    preview?: boolean;
+    confirmPosts?: string[];
+    confirmTopic?: string;
+    confirmCta?: string | null;
+  },
+): Promise<PreviewResult | void> {
   const account = await prisma.account.findUniqueOrThrow({
     where: { id: accountId },
     include: { user: true },
@@ -35,6 +54,45 @@ export async function runPipeline(
   }
 
   console.log(`[Pipeline] アカウント ${accountId} の実行開始`);
+
+  // confirmモード: 生成済みの投稿をそのまま投稿する
+  if (options?.confirmPosts && options?.confirmTopic) {
+    console.log("[Pipeline] 確認済み投稿を実行中...");
+    const posts = options.confirmPosts;
+    const cta = options.confirmCta ?? null;
+    const topic = options.confirmTopic;
+
+    let status = "成功";
+    let errorMsg: string | undefined;
+    let tweetIds: string[] = [];
+    console.log("[Pipeline] X投稿中...");
+    try {
+      tweetIds = await postThread(twitterCreds, posts, cta ?? undefined);
+      console.log("[Pipeline] 投稿完了");
+    } catch (err) {
+      status = "失敗";
+      errorMsg = err instanceof Error ? err.message : "Unknown error";
+      console.error("[Pipeline] 投稿失敗:", errorMsg);
+    }
+
+    const allPosts = [...posts];
+    if (cta) allPosts.push(cta);
+
+    await saveLog(
+      account,
+      accountId,
+      topic,
+      allPosts,
+      tweetIds,
+      status,
+      errorMsg,
+    );
+
+    if (status === "失敗") {
+      throw new Error("X投稿に失敗しました");
+    }
+    return;
+  }
 
   // 1. 話題ソース取得（BigQuery + Google News RSS）
   console.log("[Pipeline] 話題ソース取得中...");
@@ -80,7 +138,30 @@ export async function runPipeline(
     `[Pipeline] ${threadResult.posts.length}投稿を生成${threadResult.cta ? " + CTA" : ""}`,
   );
 
-  // 4. X投稿（dryRunの場合はスキップ）
+  // previewモード: 生成結果を返して終了（投稿しない）
+  if (options?.preview) {
+    console.log("[Pipeline] プレビューモード（投稿スキップ）");
+    // Claude Sonnet 4: $3/M input, $15/M output
+    const totalInput =
+      topicResult.usage.inputTokens + threadResult.usage.inputTokens;
+    const totalOutput =
+      topicResult.usage.outputTokens + threadResult.usage.outputTokens;
+    const estimatedCostUsd = (totalInput * 3 + totalOutput * 15) / 1_000_000;
+    return {
+      topic,
+      topicReason: topicResult.選定理由,
+      topicSource: topicResult.ソース,
+      posts: threadResult.posts,
+      cta: threadResult.cta,
+      cost: {
+        inputTokens: totalInput,
+        outputTokens: totalOutput,
+        estimatedCostUsd,
+      },
+    };
+  }
+
+  // 5. X投稿（dryRunの場合はスキップ）
   let status = dryRun ? "テスト" : "成功";
   let errorMsg: string | undefined;
   let tweetIds: string[] = [];
@@ -102,10 +183,40 @@ export async function runPipeline(
     }
   }
 
-  // 5. ログ保存（DB + スプレッドシート）
+  // 6. ログ保存（DB + スプレッドシート）
   const allPosts = [...threadResult.posts];
   if (threadResult.cta) allPosts.push(threadResult.cta);
 
+  await saveLog(
+    account,
+    accountId,
+    topic,
+    allPosts,
+    tweetIds,
+    status,
+    errorMsg,
+  );
+
+  if (status === "失敗") {
+    throw new Error("X投稿に失敗しました");
+  }
+}
+
+async function saveLog(
+  account: {
+    displayName: string;
+    googleServiceAccountJson: string;
+    googleSpreadsheetUrl: string;
+    user: { email: string };
+    niche: string;
+  },
+  accountId: string,
+  topic: string,
+  allPosts: string[],
+  tweetIds: string[],
+  status: string,
+  errorMsg?: string,
+) {
   await prisma.postLog.create({
     data: {
       accountId,
@@ -116,7 +227,6 @@ export async function runPipeline(
     },
   });
 
-  // スプレッドシート記録（Google設定があるアカウントのみ）
   const googleJson = decrypt(account.googleServiceAccountJson);
   const googleUrl = account.googleSpreadsheetUrl;
   if (googleJson && googleUrl) {
@@ -142,8 +252,4 @@ export async function runPipeline(
     console.log("[Pipeline] スプレッドシート未設定、スキップ");
   }
   console.log(`[Pipeline] ログ保存 (status=${status})`);
-
-  if (status === "失敗") {
-    throw new Error("X投稿に失敗しました");
-  }
 }

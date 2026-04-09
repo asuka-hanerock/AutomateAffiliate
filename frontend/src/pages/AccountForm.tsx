@@ -14,6 +14,7 @@ export default function AccountForm({ accountId, onDone }: Props) {
     niche: "転職",
     pronoun: "僕",
     trademark: "",
+    // 新規作成時のみ使用
     cronSchedule: '[{"days":[],"time":"09:00"}]',
     ctaEnabled: false,
     twitterApiKey: "",
@@ -32,22 +33,14 @@ export default function AccountForm({ accountId, onDone }: Props) {
       fetch(`/api/accounts/${accountId}`)
         .then((r) => r.json())
         .then((data) => {
-          setForm({
+          setForm((f) => ({
+            ...f,
             email: data.user?.email || "",
             displayName: data.displayName || "",
             niche: data.niche,
             pronoun: data.pronoun || "僕",
             trademark: data.trademark || "",
-            cronSchedule: data.cronSchedule,
-            ctaEnabled: data.ctaEnabled,
-            twitterApiKey: "",
-            twitterApiSecret: "",
-            twitterAccessToken: "",
-            twitterAccessTokenSecret: "",
-            claudeApiKey: "",
-            googleServiceAccountJson: "",
-            googleSpreadsheetUrl: data.googleSpreadsheetUrl || "",
-          });
+          }));
         });
     }
   }, [accountId, isEdit]);
@@ -58,9 +51,16 @@ export default function AccountForm({ accountId, onDone }: Props) {
     setError("");
 
     try {
-      const body: Record<string, unknown> = { ...form };
-      // 編集時、空のAPIキーは送らない（既存値を維持）
+      let body: Record<string, unknown>;
       if (isEdit) {
+        body = {
+          displayName: form.displayName,
+          niche: form.niche,
+          pronoun: form.pronoun,
+          trademark: form.trademark,
+        };
+      } else {
+        body = { ...form };
         if (!form.twitterApiKey) delete body.twitterApiKey;
         if (!form.twitterApiSecret) delete body.twitterApiSecret;
         if (!form.twitterAccessToken) delete body.twitterAccessToken;
@@ -98,7 +98,7 @@ export default function AccountForm({ accountId, onDone }: Props) {
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 500 }}>
       <h2 style={{ marginBottom: 16 }}>
-        {isEdit ? "アカウント編集" : "新規アカウント"}
+        {isEdit ? "プロフィール編集" : "新規アカウント"}
       </h2>
       {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
 
@@ -149,108 +149,113 @@ export default function AccountForm({ accountId, onDone }: Props) {
         />
       </Field>
 
-      <ScheduleEditor
-        value={form.cronSchedule}
-        onChange={(v) => set("cronSchedule", v)}
-      />
-
-      <Field label="">
-        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <input
-            type="checkbox"
-            checked={form.ctaEnabled}
-            onChange={(e) => set("ctaEnabled", e.target.checked)}
+      {/* 新規作成時のみ: 初期設定として表示 */}
+      {!isEdit && (
+        <>
+          <hr
+            style={{
+              margin: "16px 0",
+              border: "none",
+              borderTop: "1px solid #eee",
+            }}
           />
-          CTAを有効にする
-        </label>
-      </Field>
+          <h3 style={{ marginBottom: 12, fontSize: 16 }}>投稿設定</h3>
 
-      <hr
-        style={{
-          margin: "16px 0",
-          border: "none",
-          borderTop: "1px solid #eee",
-        }}
-      />
-      <h3 style={{ marginBottom: 12, fontSize: 16 }}>
-        APIキー{isEdit && "（空欄は既存値を維持）"}
-      </h3>
+          <ScheduleEditor
+            value={form.cronSchedule}
+            onChange={(v) => set("cronSchedule", v)}
+          />
 
-      <Field label="X API Key">
-        <input
-          value={form.twitterApiKey}
-          onChange={(e) => set("twitterApiKey", e.target.value)}
-          style={inputStyle}
-          placeholder={isEdit ? "変更する場合のみ入力" : ""}
-        />
-      </Field>
-      <Field label="X API Secret">
-        <input
-          value={form.twitterApiSecret}
-          onChange={(e) => set("twitterApiSecret", e.target.value)}
-          style={inputStyle}
-          placeholder={isEdit ? "変更する場合のみ入力" : ""}
-        />
-      </Field>
-      <Field label="X Access Token">
-        <input
-          value={form.twitterAccessToken}
-          onChange={(e) => set("twitterAccessToken", e.target.value)}
-          style={inputStyle}
-          placeholder={isEdit ? "変更する場合のみ入力" : ""}
-        />
-      </Field>
-      <Field label="X Access Token Secret">
-        <input
-          value={form.twitterAccessTokenSecret}
-          onChange={(e) => set("twitterAccessTokenSecret", e.target.value)}
-          style={inputStyle}
-          placeholder={isEdit ? "変更する場合のみ入力" : ""}
-        />
-      </Field>
-      <Field label="Claude API Key">
-        <input
-          value={form.claudeApiKey}
-          onChange={(e) => set("claudeApiKey", e.target.value)}
-          style={inputStyle}
-          placeholder={isEdit ? "変更する場合のみ入力" : ""}
-        />
-      </Field>
+          <Field label="">
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={form.ctaEnabled}
+                onChange={(e) => set("ctaEnabled", e.target.checked)}
+              />
+              CTAを有効にする
+            </label>
+          </Field>
 
-      <hr
-        style={{
-          margin: "16px 0",
-          border: "none",
-          borderTop: "1px solid #eee",
-        }}
-      />
-      <h3 style={{ marginBottom: 12, fontSize: 16 }}>
-        Google連携（スプレッドシート）
-      </h3>
+          <hr
+            style={{
+              margin: "16px 0",
+              border: "none",
+              borderTop: "1px solid #eee",
+            }}
+          />
+          <h3 style={{ marginBottom: 12, fontSize: 16 }}>APIキー</h3>
 
-      <Field label="スプレッドシートURL">
-        <input
-          value={form.googleSpreadsheetUrl}
-          onChange={(e) => set("googleSpreadsheetUrl", e.target.value)}
-          style={inputStyle}
-          placeholder="https://docs.google.com/spreadsheets/d/..."
-        />
-      </Field>
-      <Field
-        label={`サービスアカウントJSON${isEdit ? "（空欄は既存値を維持）" : ""}`}
-      >
-        <textarea
-          value={form.googleServiceAccountJson}
-          onChange={(e) => set("googleServiceAccountJson", e.target.value)}
-          style={{
-            ...inputStyle,
-            minHeight: 80,
-            fontFamily: "monospace",
-            fontSize: 12,
-          }}
-          placeholder="JSONファイルの中身をペースト"
-        />
-      </Field>
+          <Field label="X API Key">
+            <input
+              value={form.twitterApiKey}
+              onChange={(e) => set("twitterApiKey", e.target.value)}
+              style={inputStyle}
+            />
+          </Field>
+          <Field label="X API Secret">
+            <input
+              value={form.twitterApiSecret}
+              onChange={(e) => set("twitterApiSecret", e.target.value)}
+              style={inputStyle}
+            />
+          </Field>
+          <Field label="X Access Token">
+            <input
+              value={form.twitterAccessToken}
+              onChange={(e) => set("twitterAccessToken", e.target.value)}
+              style={inputStyle}
+            />
+          </Field>
+          <Field label="X Access Token Secret">
+            <input
+              value={form.twitterAccessTokenSecret}
+              onChange={(e) => set("twitterAccessTokenSecret", e.target.value)}
+              style={inputStyle}
+            />
+          </Field>
+          <Field label="Claude API Key">
+            <input
+              value={form.claudeApiKey}
+              onChange={(e) => set("claudeApiKey", e.target.value)}
+              style={inputStyle}
+            />
+          </Field>
+
+          <hr
+            style={{
+              margin: "16px 0",
+              border: "none",
+              borderTop: "1px solid #eee",
+            }}
+          />
+          <h3 style={{ marginBottom: 12, fontSize: 16 }}>
+            Google連携（スプレッドシート）
+          </h3>
+
+          <Field label="スプレッドシートURL">
+            <input
+              value={form.googleSpreadsheetUrl}
+              onChange={(e) => set("googleSpreadsheetUrl", e.target.value)}
+              style={inputStyle}
+              placeholder="https://docs.google.com/spreadsheets/d/..."
+            />
+          </Field>
+          <Field label="サービスアカウントJSON">
+            <textarea
+              value={form.googleServiceAccountJson}
+              onChange={(e) => set("googleServiceAccountJson", e.target.value)}
+              style={{
+                ...inputStyle,
+                minHeight: 80,
+                fontFamily: "monospace",
+                fontSize: 12,
+              }}
+              placeholder="JSONファイルの中身をペースト"
+            />
+          </Field>
+        </>
+      )}
 
       <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
         <button
