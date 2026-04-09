@@ -225,35 +225,50 @@ export default function AccountDetail({
         ← 一覧に戻る
       </button>
 
+      {/* プロフィールヘッダー */}
       <div
         style={{
-          border: "1px solid #ddd",
-          borderRadius: 8,
-          padding: 20,
-          marginBottom: 20,
+          background: "linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%)",
+          borderRadius: "12px 12px 0 0",
+          padding: "20px 24px",
+          color: "#fff",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 12,
-          }}
-        >
-          {account.profileImageUrl && (
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {account.profileImageUrl ? (
             <img
               src={account.profileImageUrl}
               alt=""
-              style={{ width: 48, height: 48, borderRadius: "50%" }}
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                border: "3px solid rgba(255,255,255,0.3)",
+              }}
             />
+          ) : (
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 24,
+              }}
+            >
+              {account.trademark ||
+                (account.displayName || account.user.email)[0].toUpperCase()}
+            </div>
           )}
-          <div>
-            <h2 style={{ margin: 0 }}>
+          <div style={{ flex: 1 }}>
+            <h2 style={{ margin: 0, fontSize: 20 }}>
               {account.displayName || account.user.email}
             </h2>
             {account.xUsername && (
-              <div style={{ fontSize: 13, color: "#888" }}>
+              <div style={{ fontSize: 13, opacity: 0.8 }}>
                 @{account.xUsername}
               </div>
             )}
@@ -262,10 +277,9 @@ export default function AccountDetail({
             onClick={handleSyncProfile}
             disabled={syncing}
             style={{
-              marginLeft: "auto",
-              background: "#1da1f2",
+              background: "rgba(255,255,255,0.2)",
               color: "#fff",
-              border: "none",
+              border: "1px solid rgba(255,255,255,0.3)",
               borderRadius: 6,
               padding: "6px 12px",
               cursor: "pointer",
@@ -276,36 +290,48 @@ export default function AccountDetail({
             {syncing ? "同期中..." : "Xプロフィール同期"}
           </button>
         </div>
+      </div>
+
+      {/* 設定カード */}
+      <div
+        style={{
+          border: "1px solid #e0e0e0",
+          borderTop: "none",
+          borderRadius: "0 0 12px 12px",
+          padding: 20,
+          marginBottom: 20,
+          background: "#fff",
+        }}
+      >
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: 8,
-            fontSize: 14,
-            color: "#555",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px 24px",
+            marginBottom: 16,
           }}
         >
-          <div>
-            ジャンル: <strong>{account.niche}</strong>
-          </div>
-          <div>
-            一人称: <strong>{account.pronoun}</strong>
-          </div>
-          <div>
-            スケジュール:{" "}
-            <strong>{formatSchedule(account.cronSchedule)}</strong>
-          </div>
-          <div>
-            CTA: <strong>{account.ctaEnabled ? "ON" : "OFF"}</strong>
-          </div>
+          <InfoItem label="ジャンル" value={account.niche} />
+          <InfoItem
+            label="スケジュール"
+            value={formatSchedule(account.cronSchedule)}
+          />
+          <InfoItem label="一人称" value={account.pronoun} />
+          <InfoItem label="CTA" value={account.ctaEnabled ? "ON" : "OFF"} />
           {account.trademark && (
-            <div>
-              トレードマーク: <strong>{account.trademark}</strong>
-            </div>
+            <InfoItem label="トレードマーク" value={account.trademark} />
           )}
         </div>
+
+        {/* アクションボタン */}
         <div
-          style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}
+          style={{
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+            paddingTop: 12,
+            borderTop: "1px solid #f0f0f0",
+          }}
         >
           <button
             onClick={() => handleRun(false)}
@@ -314,10 +340,11 @@ export default function AccountDetail({
               background: "#17bf63",
               color: "#fff",
               border: "none",
-              borderRadius: 6,
-              padding: "8px 16px",
+              borderRadius: 8,
+              padding: "10px 20px",
               cursor: "pointer",
               fontSize: 14,
+              fontWeight: 600,
               opacity: running ? 0.6 : 1,
             }}
           >
@@ -330,65 +357,70 @@ export default function AccountDetail({
               background: "#794bc4",
               color: "#fff",
               border: "none",
-              borderRadius: 6,
-              padding: "8px 16px",
+              borderRadius: 8,
+              padding: "10px 20px",
               cursor: "pointer",
               fontSize: 14,
+              fontWeight: 600,
               opacity: running ? 0.6 : 1,
             }}
           >
             {running ? "実行中..." : "テスト"}
           </button>
-          <button
-            onClick={() => onEdit(accountId)}
-            style={{
-              background: "#f0f0f0",
-              border: "1px solid #ccc",
-              borderRadius: 6,
-              padding: "8px 16px",
-              cursor: "pointer",
-              fontSize: 14,
-            }}
-          >
-            編集
-          </button>
+          <div style={{ flex: 1 }} />
           <button
             onClick={() => onPrompts(accountId)}
             style={{
-              background: "#f7931a",
-              color: "#fff",
-              border: "none",
-              borderRadius: 6,
-              padding: "8px 16px",
+              background: "#fff",
+              border: "1px solid #f7931a",
+              color: "#f7931a",
+              borderRadius: 8,
+              padding: "10px 16px",
               cursor: "pointer",
-              fontSize: 14,
+              fontSize: 13,
             }}
           >
             プロンプト管理
           </button>
           <button
+            onClick={() => onEdit(accountId)}
+            style={{
+              background: "#fff",
+              border: "1px solid #ccc",
+              color: "#333",
+              borderRadius: 8,
+              padding: "10px 16px",
+              cursor: "pointer",
+              fontSize: 13,
+            }}
+          >
+            編集
+          </button>
+          <button
             onClick={handleDeleteAccount}
             style={{
-              background: "#e0245e",
-              color: "#fff",
-              border: "none",
-              borderRadius: 6,
-              padding: "8px 16px",
+              background: "#fff",
+              border: "1px solid #e0245e",
+              color: "#e0245e",
+              borderRadius: 8,
+              padding: "10px 16px",
               cursor: "pointer",
-              fontSize: 14,
+              fontSize: 13,
             }}
           >
             削除
           </button>
         </div>
+
         {runResult && (
           <div
             style={{
               marginTop: 12,
-              padding: 8,
-              borderRadius: 4,
+              padding: 10,
+              borderRadius: 6,
               background: runResult.ok ? "#e6f9ed" : "#fde8ec",
               color: runResult.ok ? "#17bf63" : "#e0245e",
+              fontSize: 14,
             }}
           >
             {runResult.message}
@@ -677,6 +709,24 @@ export default function AccountDetail({
           })}
         </>
       )}
+    </div>
+  );
+}
+
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <span
+        style={{
+          fontSize: 11,
+          color: "#888",
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ fontSize: 14, fontWeight: 600 }}>{value}</span>
     </div>
   );
 }
