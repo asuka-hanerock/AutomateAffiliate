@@ -11,6 +11,10 @@ interface PostLog {
 
 interface AccountData {
   id: string;
+  displayName: string;
+  profileImageUrl: string;
+  xUsername: string;
+  bio: string;
   niche: string;
   pronoun: string;
   trademark: string;
@@ -50,6 +54,7 @@ export default function AccountDetail({ accountId, onBack, onEdit }: Props) {
     message: string;
   } | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -83,6 +88,25 @@ export default function AccountDetail({ accountId, onBack, onEdit }: Props) {
       setRunResult({ ok: false, message: "通信エラー" });
     } finally {
       setRunning(false);
+    }
+  };
+
+  const handleSyncProfile = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch(`/api/sync-profile/${accountId}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        load();
+      } else {
+        alert(data.error);
+      }
+    } catch {
+      alert("通信エラー");
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -183,7 +207,49 @@ export default function AccountDetail({ accountId, onBack, onEdit }: Props) {
           marginBottom: 20,
         }}
       >
-        <h2 style={{ margin: "0 0 12px" }}>{account.user.email}</h2>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 12,
+          }}
+        >
+          {account.profileImageUrl && (
+            <img
+              src={account.profileImageUrl}
+              alt=""
+              style={{ width: 48, height: 48, borderRadius: "50%" }}
+            />
+          )}
+          <div>
+            <h2 style={{ margin: 0 }}>
+              {account.displayName || account.user.email}
+            </h2>
+            {account.xUsername && (
+              <div style={{ fontSize: 13, color: "#888" }}>
+                @{account.xUsername}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={handleSyncProfile}
+            disabled={syncing}
+            style={{
+              marginLeft: "auto",
+              background: "#1da1f2",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding: "6px 12px",
+              cursor: "pointer",
+              fontSize: 12,
+              opacity: syncing ? 0.6 : 1,
+            }}
+          >
+            {syncing ? "同期中..." : "Xプロフィール同期"}
+          </button>
+        </div>
         <div
           style={{
             display: "grid",
@@ -437,7 +503,7 @@ export default function AccountDetail({ accountId, onBack, onEdit }: Props) {
                             fontSize: 11,
                           }}
                         >
-                          {deleting === log.id ? "..." : "X削除"}
+                          {deleting === log.id ? "..." : "X投稿削除"}
                         </button>
                       )}
                     <button
@@ -493,27 +559,42 @@ export default function AccountDetail({ accountId, onBack, onEdit }: Props) {
                             marginBottom: 4,
                           }}
                         >
-                          <div
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: "50%",
-                              background: "#1da1f2",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#fff",
-                              fontSize: 14,
-                              fontWeight: 700,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {account.trademark ||
-                              account.user.email[0].toUpperCase()}
-                          </div>
+                          {account.profileImageUrl ? (
+                            <img
+                              src={account.profileImageUrl}
+                              alt=""
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "50%",
+                                flexShrink: 0,
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "50%",
+                                background: "#1da1f2",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "#fff",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                flexShrink: 0,
+                              }}
+                            >
+                              {account.trademark ||
+                                (account.displayName ||
+                                  account.user.email)[0].toUpperCase()}
+                            </div>
+                          )}
                           <div>
                             <span style={{ fontWeight: 600, fontSize: 13 }}>
-                              {account.user.email.split("@")[0]}
+                              {account.displayName ||
+                                account.user.email.split("@")[0]}
                             </span>
                             <span
                               style={{

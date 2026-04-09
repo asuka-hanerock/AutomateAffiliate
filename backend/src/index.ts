@@ -5,6 +5,7 @@ import accountsRouter from "./routes/accounts";
 import runRouter from "./routes/run";
 import logsRouter from "./routes/logs";
 import deleteTweetsRouter from "./routes/delete-tweets";
+import syncProfileRouter from "./routes/sync-profile";
 import { initScheduler } from "./scheduler/cron";
 
 const app = express();
@@ -18,6 +19,7 @@ app.use("/api/accounts", accountsRouter);
 app.use("/api/run", runRouter);
 app.use("/api/logs", logsRouter);
 app.use("/api/delete-tweets", deleteTweetsRouter);
+app.use("/api/sync-profile", syncProfileRouter);
 
 // ヘルスチェック
 app.get("/api/health", (_req, res) => {

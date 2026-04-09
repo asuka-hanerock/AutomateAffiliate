@@ -18,6 +18,10 @@ model Account {
   id        String    @id @default(uuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName     String @default("")  // アカウント名（表示用）
+  profileImageUrl String @default("")  // Xアイコン画像URL
+  xUsername       String @default("")  // @ユーザー名
+  bio             String @default("")  // 自己紹介
   niche     String    @default("転職")
   pronoun   String    @default("僕") // 一人称（僕、俺、私、自分、あだ名など）
   trademark String    @default("")  // トレードマーク絵文字（🐢など、任意）

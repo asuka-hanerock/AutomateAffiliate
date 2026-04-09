@@ -9,6 +9,7 @@ export default function AccountForm({ accountId, onDone }: Props) {
   const isEdit = !!accountId;
   const [form, setForm] = useState({
     email: "",
+    displayName: "",
     niche: "転職",
     pronoun: "僕",
     trademark: "",
@@ -32,6 +33,7 @@ export default function AccountForm({ accountId, onDone }: Props) {
         .then((data) => {
           setForm({
             email: data.user?.email || "",
+            displayName: data.displayName || "",
             niche: data.niche,
             pronoun: data.pronoun || "僕",
             trademark: data.trademark || "",
@@ -110,6 +112,15 @@ export default function AccountForm({ accountId, onDone }: Props) {
           />
         </Field>
       )}
+
+      <Field label="アカウント名">
+        <input
+          value={form.displayName}
+          onChange={(e) => set("displayName", e.target.value)}
+          style={inputStyle}
+          placeholder="かめふく、など表示名"
+        />
+      </Field>
 
       <Field label="ジャンル（ニッチ）">
         <input

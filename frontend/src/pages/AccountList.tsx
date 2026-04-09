@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 interface Account {
   id: string;
+  displayName: string;
   niche: string;
   cronSchedule: string;
   ctaEnabled: boolean;
@@ -48,7 +49,9 @@ export default function AccountList({ onSelect, onEdit }: Props) {
           }}
         >
           <div style={{ cursor: "pointer" }} onClick={() => onSelect(a.id)}>
-            <div style={{ fontWeight: 600, fontSize: 16 }}>{a.user.email}</div>
+            <div style={{ fontWeight: 600, fontSize: 16 }}>
+              {a.displayName || a.user.email}
+            </div>
             <div style={{ color: "#666", fontSize: 14, marginTop: 4 }}>
               ジャンル: {a.niche} ／ Cron: {a.cronSchedule} ／ CTA:{" "}
               {a.ctaEnabled ? "ON" : "OFF"}

@@ -118,6 +118,7 @@ export async function runPipeline(
         datetime: new Date().toLocaleString("ja-JP", {
           timeZone: "Asia/Tokyo",
         }),
+        displayName: account.displayName,
         email: account.user.email,
         niche: account.niche,
         topic,

@@ -4,10 +4,8 @@ const SHEET_NAME = "X投稿";
 
 // スプレッドシートURLからIDを自動抽出
 export function extractSpreadsheetId(url: string): string {
-  // https://docs.google.com/spreadsheets/d/{ID}/edit...
   const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
   if (match) return match[1];
-  // IDそのものが渡された場合
   if (/^[a-zA-Z0-9_-]+$/.test(url)) return url;
   throw new Error("スプレッドシートのURLまたはIDが無効です");
 }
@@ -22,6 +20,7 @@ function getAuth(serviceAccountJson: string) {
 
 export interface PostLogRow {
   datetime: string;
+  displayName: string;
   email: string;
   niche: string;
   topic: string;
@@ -40,8 +39,10 @@ export async function appendPostLog(
   const auth = getAuth(serviceAccountJson);
   const sheets = google.sheets({ version: "v4", auth });
 
+  // A:日時 B:アカウント名 C:メールアドレス D:ジャンル E:トピック F-J:投稿1-5 K:ステータス L:エラー M:ツイートID
   const values = [
     row.datetime,
+    row.displayName,
     row.email,
     row.niche,
     row.topic,
@@ -53,7 +54,7 @@ export async function appendPostLog(
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `${SHEET_NAME}!A:L`,
+    range: `${SHEET_NAME}!A:M`,
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [values] },
   });

@@ -51,6 +51,7 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   const {
     email,
+    displayName,
     niche,
     pronoun,
     trademark,
@@ -74,6 +75,7 @@ router.post("/", async (req, res) => {
   const account = await prisma.account.create({
     data: {
       userId: user.id,
+      displayName: displayName || "",
       niche: niche || "転職",
       pronoun: pronoun || "僕",
       trademark: trademark || "",
@@ -104,6 +106,7 @@ router.post("/", async (req, res) => {
 // 更新
 router.put("/:id", async (req, res) => {
   const {
+    displayName,
     niche,
     pronoun,
     trademark,
@@ -119,6 +122,7 @@ router.put("/:id", async (req, res) => {
   } = req.body;
 
   const data: Record<string, unknown> = {};
+  if (displayName !== undefined) data.displayName = displayName;
   if (niche !== undefined) data.niche = niche;
   if (pronoun !== undefined) data.pronoun = pronoun;
   if (trademark !== undefined) data.trademark = trademark;
