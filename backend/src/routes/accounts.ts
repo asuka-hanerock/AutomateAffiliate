@@ -126,6 +126,7 @@ router.put("/:id", async (req, res) => {
   if (niche !== undefined) data.niche = niche;
   if (pronoun !== undefined) data.pronoun = pronoun;
   if (trademark !== undefined) data.trademark = trademark;
+  if (req.body.profileBio !== undefined) data.profileBio = req.body.profileBio;
   if (cronSchedule !== undefined) data.cronSchedule = cronSchedule;
   if (ctaEnabled !== undefined) data.ctaEnabled = ctaEnabled;
   if (req.body.skipPreview !== undefined)

@@ -14,6 +14,7 @@ export default function AccountForm({ accountId, onDone }: Props) {
     niche: "転職",
     pronoun: "僕",
     trademark: "",
+    profileBio: "",
     // 新規作成時のみ使用
     cronSchedule: '[{"days":[],"time":"09:00"}]',
     ctaEnabled: false,
@@ -40,6 +41,7 @@ export default function AccountForm({ accountId, onDone }: Props) {
             niche: data.niche,
             pronoun: data.pronoun || "僕",
             trademark: data.trademark || "",
+            profileBio: data.profileBio || "",
           }));
         });
     }
@@ -58,6 +60,7 @@ export default function AccountForm({ accountId, onDone }: Props) {
           niche: form.niche,
           pronoun: form.pronoun,
           trademark: form.trademark,
+          profileBio: form.profileBio,
         };
       } else {
         body = { ...form };
@@ -147,6 +150,18 @@ export default function AccountForm({ accountId, onDone }: Props) {
           style={inputStyle}
           placeholder="🐢 など絵文字やキャラクター"
         />
+      </Field>
+
+      <Field label="発信者プロフィール（任意）">
+        <textarea
+          value={form.profileBio}
+          onChange={(e) => set("profileBio", e.target.value)}
+          style={{ ...inputStyle, minHeight: 80 }}
+          placeholder="例: 大手IT企業エンジニア。副業でアプリ/SaaS複数運営。ITストラテジスト/AWS DVA取得。"
+        />
+        <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>
+          投稿生成時にこのプロフィールを踏まえた視点で書かれます
+        </div>
       </Field>
 
       {/* 新規作成時のみ: 初期設定として表示 */}

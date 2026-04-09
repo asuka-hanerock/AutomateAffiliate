@@ -27,47 +27,7 @@
 
 ## 次にやること（優先順）
 
-### 1. 流行構文テンプレート
-**背景**: Xで流行っている投稿構文（「〇〇な人の特徴」「〇〇、知らないとやばい」等）を登録して、スレッド生成時に使わせたい
-
-**実装方針**:
-- 新モデル `TrendFormat`（accountId, name, template, example, isActive）
-- template例: `「{{topic}}な人の特徴」→ 特徴を5つ挙げるスレッド`
-- スレッド生成プロンプトに `{{trendFormat}}` 変数を追加
-- pipeline.tsで有効なTrendFormatからランダム or ローテーションで1つ選んで注入
-- 管理画面にTrendFormat CRUD UI
-
-**変更ファイル**:
-- `backend/src/prisma/schema.prisma` — TrendFormatモデル追加
-- `backend/src/routes/formats.ts` — 新規CRUD API
-- `backend/src/services/pipeline.ts` — フォーマット選択ロジック
-- `backend/prompts/generate-thread.txt` — {{trendFormat}}変数追加
-- `frontend/src/pages/FormatManager.tsx` — 新規管理画面
-
-### 2. プロンプト改善（かめふくアカウント向け）
-**背景**: 投稿内容が一般論的で差別化できていない
-
-**改善ポイント**:
-- 発信者プロフィールをプロンプトに注入: 大手IT企業エンジニア・副業でアプリ/SaaS複数運営・ITストラテジスト/AWS DVA取得
-- 一人称視点を強化（「現場で感じるのは〜」「自分がエンジニアとして〜」）
-- ターゲット明示: 転職・年収アップを考えている20〜30代エンジニア
-- Account に `profileBio`（発信者プロフィール文）フィールドを追加し、プロンプトに `{{profileBio}}` で注入するのが良い
-
-**変更ファイル**:
-- `backend/prompts/generate-thread.txt` — 全面書き直し
-- `backend/prompts/select-topic.txt` — 現場エンジニア目線に調整
-- `backend/src/prisma/schema.prisma` — Account.profileBio追加
-- `backend/src/services/claude.ts` — profileBio変数追加
-
-### 3. usedTopics永続化
-**背景**: backendリスタートで使用済み話題リストがリセットされる
-
-**実装方針**:
-- pipeline.ts起動時にPostLogから直近30件のtopicを読み込む
-- プロセスメモリのusedTopicsをPostLog読み込みで初期化
-
-**変更ファイル**:
-- `backend/src/services/pipeline.ts` — initUsedTopics関数追加
+（現時点でタスクなし）
 
 ---
 
@@ -80,11 +40,13 @@ AutomateAffiliate/
 │   │   ├── index.ts                     # Express (PORT=3002)
 │   │   ├── routes/
 │   │   │   ├── accounts.ts              # CRUD
-│   │   │   ├── run.ts                   # POST /api/run（手動トリガー）
+│   │   │   ├── run.ts                   # POST /api/run（手動トリガー、preview/confirm対応）
 │   │   │   ├── logs.ts                  # ログ取得・削除
 │   │   │   ├── delete-tweets.ts         # X投稿削除
 │   │   │   ├── sync-profile.ts          # Xプロフィール同期
-│   │   │   └── prompts.ts              # プロンプトCRUD
+│   │   │   ├── prompts.ts              # プロンプトCRUD
+│   │   │   ├── formats.ts              # 流行構文テンプレートCRUD
+│   │   │   └── analyze-format.ts       # スクショ→構文分析（Claude画像入力）
 │   │   ├── services/
 │   │   │   ├── trends.ts                # BigQuery + Google News RSS
 │   │   │   ├── claude.ts                # 話題選定 + スレッド生成
@@ -108,9 +70,12 @@ AutomateAffiliate/
 │   │   │   └── ScheduleEditor.tsx       # 曜日+時刻スケジュールUI
 │   │   └── pages/
 │   │       ├── AccountList.tsx
-│   │       ├── AccountForm.tsx
-│   │       ├── AccountDetail.tsx
-│   │       └── PromptManager.tsx
+│   │       ├── AccountForm.tsx           # プロフィール編集（profileBio含む）
+│   │       ├── AccountDetail.tsx          # 詳細+プレビューモーダル
+│   │       ├── AccountSettings.tsx        # 投稿設定（スケジュール/CTA/文字数上限）
+│   │       ├── AccountApiKeys.tsx         # API連携
+│   │       ├── PromptManager.tsx
+│   │       └── FormatManager.tsx          # 流行構文テンプレート管理+スクショ分析
 │   └── vite.config.ts                   # proxy → localhost:3002
 ```
 

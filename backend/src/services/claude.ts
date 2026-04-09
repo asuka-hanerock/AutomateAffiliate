@@ -99,6 +99,7 @@ export async function generateThread(
   trendFormat?: string,
   postCount: number = DEFAULT_POST_COUNT,
   maxChars: number = DEFAULT_MAX_CHARS,
+  profileBio?: string,
 ): Promise<ThreadResult> {
   const client = new Anthropic({ apiKey });
 
@@ -111,12 +112,17 @@ export async function generateThread(
     : "指定なし。自由な構成でOK";
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const profileBioText = profileBio
+      ? `以下の発信者プロフィールを踏まえ、この人ならではの視点・経験を反映させること:\n${profileBio}`
+      : "プロフィール未設定。一般的な視点でOK";
+
     const prompt = applyVars(promptTemplate, {
       niche,
       topic,
       pronoun,
       trademarkRule,
       trendFormat: trendFormatText,
+      profileBio: profileBioText,
       postCount: String(postCount),
       maxChars: String(maxChars),
       date: getToday(),

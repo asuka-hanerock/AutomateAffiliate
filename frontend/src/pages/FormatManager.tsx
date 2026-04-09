@@ -19,6 +19,7 @@ export default function FormatManager({ accountId, onBack }: Props) {
   const [formats, setFormats] = useState<TrendFormat[]>([]);
   const [editing, setEditing] = useState<TrendFormat | null>(null);
   const [creating, setCreating] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [form, setForm] = useState({
     name: "",
     template: "",
@@ -108,6 +109,44 @@ export default function FormatManager({ accountId, onBack }: Props) {
     setForm({ name: "", template: "", example: "", postCount: 5 });
   };
 
+  const handleAnalyze = async (file: File) => {
+    setAnalyzing(true);
+    try {
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      const mediaType = file.type || "image/png";
+      const res = await fetch("/api/analyze-format", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountId, imageBase64: base64, mediaType }),
+      });
+      const data = await res.json();
+      if (res.ok && data.suggestion) {
+        setForm({
+          name: data.suggestion.name || "",
+          template: data.suggestion.template || "",
+          example: data.suggestion.example || "",
+          postCount: data.suggestion.postCount || 5,
+        });
+        setCreating(true);
+        setEditing(null);
+      } else {
+        alert(data.error || "分析に失敗しました");
+      }
+    } catch {
+      alert("通信エラー");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   return (
     <div style={{ maxWidth: 600 }}>
       <button
@@ -149,6 +188,34 @@ export default function FormatManager({ accountId, onBack }: Props) {
           >
             + 追加
           </button>
+        )}
+        {!creating && !editing && (
+          <label
+            style={{
+              background: "#794bc4",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding: "8px 16px",
+              cursor: analyzing ? "wait" : "pointer",
+              fontSize: 13,
+              fontWeight: 600,
+              opacity: analyzing ? 0.6 : 1,
+            }}
+          >
+            {analyzing ? "分析中..." : "スクショから分析"}
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleAnalyze(file);
+                e.target.value = "";
+              }}
+              disabled={analyzing}
+            />
+          </label>
         )}
       </div>
 

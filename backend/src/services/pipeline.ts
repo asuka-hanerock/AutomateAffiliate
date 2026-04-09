@@ -9,6 +9,23 @@ import { appendPostLog } from "./sheets";
 // 使用済み話題を直近30件保持（プロセス内メモリ）
 const usedTopics: string[] = [];
 const MAX_USED_TOPICS = 30;
+let usedTopicsInitialized = false;
+
+async function initUsedTopics() {
+  if (usedTopicsInitialized) return;
+  const recentLogs = await prisma.postLog.findMany({
+    orderBy: { postedAt: "desc" },
+    take: MAX_USED_TOPICS,
+    select: { topic: true },
+  });
+  for (const log of recentLogs.reverse()) {
+    if (!usedTopics.includes(log.topic)) {
+      usedTopics.push(log.topic);
+    }
+  }
+  usedTopicsInitialized = true;
+  console.log(`[Pipeline] 使用済み話題を${usedTopics.length}件復元`);
+}
 
 export interface PreviewResult {
   topic: string;
@@ -33,6 +50,8 @@ export async function runPipeline(
     confirmCta?: string | null;
   },
 ): Promise<PreviewResult | void> {
+  await initUsedTopics();
+
   const account = await prisma.account.findUniqueOrThrow({
     where: { id: accountId },
     include: { user: true },
@@ -153,6 +172,7 @@ export async function runPipeline(
     selectedFormat,
     postCount,
     maxChars,
+    account.profileBio || undefined,
   );
   console.log(
     `[Pipeline] ${threadResult.posts.length}投稿を生成${threadResult.cta ? " + CTA" : ""}`,
