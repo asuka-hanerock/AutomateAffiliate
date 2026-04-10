@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 
-const SHEET_NAME = "X投稿";
+const SHEET_NAME = "X投稿v2";
 
 // スプレッドシートURLからIDを自動抽出
 export function extractSpreadsheetId(url: string): string {
