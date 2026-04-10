@@ -88,9 +88,6 @@ export default function AccountSettings({
       )}
 
       {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
-      {success && (
-        <div style={{ color: "#17bf63", marginBottom: 12 }}>保存しました</div>
-      )}
 
       <ScheduleEditor
         value={form.cronSchedule}
@@ -260,6 +257,11 @@ export default function AccountSettings({
         >
           キャンセル
         </button>
+        {success && (
+          <span style={{ color: "#17bf63", fontSize: 14, fontWeight: 600 }}>
+            保存しました
+          </span>
+        )}
       </div>
     </form>
   );

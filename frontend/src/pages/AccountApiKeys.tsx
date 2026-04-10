@@ -105,9 +105,6 @@ export default function AccountApiKeys({ accountId, onBack, embedded }: Props) {
       </p>
 
       {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
-      {success && (
-        <div style={{ color: "#17bf63", marginBottom: 12 }}>保存しました</div>
-      )}
 
       <h3 style={{ marginBottom: 12, fontSize: 15 }}>X (Twitter) API</h3>
       <Field label="API Key">
@@ -265,6 +262,11 @@ export default function AccountApiKeys({ accountId, onBack, embedded }: Props) {
         >
           キャンセル
         </button>
+        {success && (
+          <span style={{ color: "#17bf63", fontSize: 14, fontWeight: 600 }}>
+            保存しました
+          </span>
+        )}
       </div>
     </form>
   );
