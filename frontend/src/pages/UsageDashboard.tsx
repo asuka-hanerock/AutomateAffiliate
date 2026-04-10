@@ -19,8 +19,19 @@ interface UsageData {
   since: string;
   totalCost: number;
   byProvider: Record<string, ProviderSummary>;
+  byOperation: Record<string, ProviderSummary>;
   daily: DailyEntry[];
   totalRecords: number;
+}
+
+interface DetailRecord {
+  id: string;
+  provider: string;
+  operation: string;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  createdAt: string;
 }
 
 interface Props {
@@ -40,12 +51,28 @@ const providerLabels: Record<string, { label: string; color: string }> = {
   x_read: { label: "X 読取", color: "#794bc4" },
 };
 
+const operationLabels: Record<string, string> = {
+  select_topic: "話題選定",
+  generate_thread: "スレッド生成",
+  generate_quote: "引用文生成",
+  post_thread: "スレッド投稿",
+  post_quote: "引用投稿",
+  read_timeline: "タイムライン読取",
+  search: "検索",
+};
+
 export default function UsageDashboard({ accountId, onBack }: Props) {
   const [period, setPeriod] = useState<"day" | "month" | "year">("month");
   const [data, setData] = useState<UsageData | null>(null);
+  const [details, setDetails] = useState<DetailRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [detailFilter, setDetailFilter] = useState<{
+    provider: string;
+    operation: string;
+  }>({ provider: "", operation: "" });
+  const [showDetails, setShowDetails] = useState(false);
 
-  const load = (p: string) => {
+  const loadSummary = (p: string) => {
     setLoading(true);
     fetch(`/api/usage/${accountId}?period=${p}`)
       .then((r) => r.json())
@@ -53,9 +80,22 @@ export default function UsageDashboard({ accountId, onBack }: Props) {
       .finally(() => setLoading(false));
   };
 
+  const loadDetails = () => {
+    const params = new URLSearchParams({ period });
+    if (detailFilter.provider) params.set("provider", detailFilter.provider);
+    if (detailFilter.operation) params.set("operation", detailFilter.operation);
+    fetch(`/api/usage/${accountId}/details?${params}`)
+      .then((r) => r.json())
+      .then(setDetails);
+  };
+
   useEffect(() => {
-    load(period);
+    loadSummary(period);
   }, [accountId, period]);
+
+  useEffect(() => {
+    if (showDetails) loadDetails();
+  }, [showDetails, period, detailFilter]);
 
   const maxDaily = data ? Math.max(...data.daily.map((d) => d.total), 0.01) : 1;
 
@@ -120,17 +160,18 @@ export default function UsageDashboard({ accountId, onBack }: Props) {
             </div>
             <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
               ≈ ¥{Math.round(data.totalCost * 150).toLocaleString()}
-              （$1=¥150換算） ・{data.totalRecords}回のAPI呼び出し
+              （$1=¥150換算）・{data.totalRecords}回のAPI呼び出し
             </div>
           </div>
 
           {/* プロバイダ別 */}
+          <h3 style={{ fontSize: 15, marginBottom: 10 }}>プロバイダ別</h3>
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
               gap: 12,
-              marginBottom: 24,
+              marginBottom: 20,
             }}
           >
             {Object.entries(data.byProvider).map(([key, val]) => {
@@ -173,7 +214,82 @@ export default function UsageDashboard({ accountId, onBack }: Props) {
             })}
           </div>
 
-          {/* 日別推移（簡易バーチャート） */}
+          {/* 操作別内訳 */}
+          <h3 style={{ fontSize: 15, marginBottom: 10 }}>操作別内訳</h3>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginBottom: 24,
+              fontSize: 13,
+            }}
+          >
+            <thead>
+              <tr
+                style={{
+                  borderBottom: "2px solid #eee",
+                  textAlign: "left",
+                }}
+              >
+                <th style={{ padding: "8px 4px" }}>操作</th>
+                <th style={{ padding: "8px 4px", textAlign: "right" }}>回数</th>
+                <th style={{ padding: "8px 4px", textAlign: "right" }}>
+                  コスト
+                </th>
+                <th style={{ padding: "8px 4px", textAlign: "right" }}>
+                  入力tok
+                </th>
+                <th style={{ padding: "8px 4px", textAlign: "right" }}>
+                  出力tok
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(data.byOperation).map(([op, val]) => (
+                <tr key={op} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                  <td style={{ padding: "6px 4px" }}>
+                    {operationLabels[op] ?? op}
+                  </td>
+                  <td style={{ padding: "6px 4px", textAlign: "right" }}>
+                    {val.count}
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 4px",
+                      textAlign: "right",
+                      fontWeight: 600,
+                    }}
+                  >
+                    ${val.costUsd.toFixed(4)}
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 4px",
+                      textAlign: "right",
+                      color: "#888",
+                    }}
+                  >
+                    {val.inputTokens > 0
+                      ? val.inputTokens.toLocaleString()
+                      : "-"}
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 4px",
+                      textAlign: "right",
+                      color: "#888",
+                    }}
+                  >
+                    {val.outputTokens > 0
+                      ? val.outputTokens.toLocaleString()
+                      : "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* 日別推移 */}
           {data.daily.length > 0 && (
             <>
               <h3 style={{ fontSize: 15, marginBottom: 12 }}>日別推移</h3>
@@ -271,12 +387,196 @@ export default function UsageDashboard({ accountId, onBack }: Props) {
             </>
           )}
 
-          {data.daily.length === 0 && (
-            <p style={{ color: "#888", fontSize: 13 }}>
-              この期間のデータはありません
-            </p>
-          )}
+          {/* 明細セクション */}
+          <div style={{ marginTop: 24 }}>
+            <button
+              onClick={() => setShowDetails((v) => !v)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#1da1f2",
+                fontSize: 14,
+                fontWeight: 600,
+                padding: 0,
+              }}
+            >
+              {showDetails ? "明細を閉じる ▲" : "明細を表示 ▼"}
+            </button>
+
+            {showDetails && (
+              <div style={{ marginTop: 12 }}>
+                {/* フィルター */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    marginBottom: 12,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <select
+                    value={detailFilter.provider}
+                    onChange={(e) =>
+                      setDetailFilter((f) => ({
+                        ...f,
+                        provider: e.target.value,
+                      }))
+                    }
+                    style={{
+                      padding: "6px 10px",
+                      border: "1px solid #ccc",
+                      borderRadius: 4,
+                      fontSize: 13,
+                    }}
+                  >
+                    <option value="">全プロバイダ</option>
+                    <option value="claude">Claude API</option>
+                    <option value="x_post">X 投稿</option>
+                    <option value="x_read">X 読取</option>
+                  </select>
+                  <select
+                    value={detailFilter.operation}
+                    onChange={(e) =>
+                      setDetailFilter((f) => ({
+                        ...f,
+                        operation: e.target.value,
+                      }))
+                    }
+                    style={{
+                      padding: "6px 10px",
+                      border: "1px solid #ccc",
+                      borderRadius: 4,
+                      fontSize: 13,
+                    }}
+                  >
+                    <option value="">全操作</option>
+                    <option value="select_topic">話題選定</option>
+                    <option value="generate_thread">スレッド生成</option>
+                    <option value="generate_quote">引用文生成</option>
+                    <option value="post_thread">スレッド投稿</option>
+                    <option value="post_quote">引用投稿</option>
+                    <option value="read_timeline">タイムライン読取</option>
+                    <option value="search">検索</option>
+                  </select>
+                </div>
+
+                {/* 明細テーブル */}
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: 12,
+                  }}
+                >
+                  <thead>
+                    <tr
+                      style={{
+                        borderBottom: "2px solid #eee",
+                        textAlign: "left",
+                      }}
+                    >
+                      <th style={{ padding: "6px 4px" }}>日時</th>
+                      <th style={{ padding: "6px 4px" }}>プロバイダ</th>
+                      <th style={{ padding: "6px 4px" }}>操作</th>
+                      <th
+                        style={{
+                          padding: "6px 4px",
+                          textAlign: "right",
+                        }}
+                      >
+                        コスト
+                      </th>
+                      <th
+                        style={{
+                          padding: "6px 4px",
+                          textAlign: "right",
+                        }}
+                      >
+                        トークン
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {details.map((r) => (
+                      <tr
+                        key={r.id}
+                        style={{ borderBottom: "1px solid #f5f5f5" }}
+                      >
+                        <td
+                          style={{
+                            padding: "5px 4px",
+                            color: "#888",
+                          }}
+                        >
+                          {new Date(r.createdAt).toLocaleString("ja-JP", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td style={{ padding: "5px 4px" }}>
+                          <span
+                            style={{
+                              color:
+                                providerLabels[r.provider]?.color ?? "#888",
+                              fontWeight: 600,
+                              fontSize: 11,
+                            }}
+                          >
+                            {providerLabels[r.provider]?.label ?? r.provider}
+                          </span>
+                        </td>
+                        <td style={{ padding: "5px 4px" }}>
+                          {operationLabels[r.operation] ?? r.operation}
+                        </td>
+                        <td
+                          style={{
+                            padding: "5px 4px",
+                            textAlign: "right",
+                            fontWeight: 600,
+                          }}
+                        >
+                          ${r.costUsd.toFixed(4)}
+                        </td>
+                        <td
+                          style={{
+                            padding: "5px 4px",
+                            textAlign: "right",
+                            color: "#888",
+                          }}
+                        >
+                          {r.inputTokens > 0 || r.outputTokens > 0
+                            ? `${r.inputTokens.toLocaleString()} / ${r.outputTokens.toLocaleString()}`
+                            : "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {details.length === 0 && (
+                  <p
+                    style={{
+                      color: "#888",
+                      fontSize: 12,
+                      textAlign: "center",
+                      padding: 16,
+                    }}
+                  >
+                    該当するレコードがありません
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </>
+      )}
+
+      {data && !loading && data.totalRecords === 0 && (
+        <p style={{ color: "#888", fontSize: 13 }}>
+          この期間のデータはありません
+        </p>
       )}
     </div>
   );
