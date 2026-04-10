@@ -39,14 +39,15 @@ export async function appendPostLog(
   const auth = getAuth(serviceAccountJson);
   const sheets = google.sheets({ version: "v4", auth });
 
-  // A:日時 B:アカウント名 C:メールアドレス D:ジャンル E:トピック F-J:投稿1-5 K:ステータス L:エラー M:ツイートID
+  // A:日時 B:アカウント名 C:メールアドレス D:ジャンル E:トピック F:投稿内容 G:投稿数 H:ステータス I:エラー J:ツイートID
   const values = [
     row.datetime,
     row.displayName,
     row.email,
     row.niche,
     row.topic,
-    ...row.posts,
+    row.posts.map((p, i) => `【${i + 1}】${p}`).join("\n\n"),
+    String(row.posts.length),
     row.status,
     row.error || "",
     (row.tweetIds || []).join(","),
@@ -54,7 +55,7 @@ export async function appendPostLog(
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `${SHEET_NAME}!A:M`,
+    range: `${SHEET_NAME}!A:J`,
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [values] },
   });
