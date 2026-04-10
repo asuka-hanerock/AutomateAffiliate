@@ -104,7 +104,7 @@ export async function generateThread(
   const client = new Anthropic({ apiKey });
 
   const trademarkRule = trademark
-    ? `\n- トレードマーク「${trademark}」は、話題と自然に結びつく時だけ使うこと\n- 無理に入れるくらいなら使わない方がいい\n- 使う場合は文中に溶け込ませること（文末にポンと置くのは禁止）\n- 良い例: 「${trademark}ペースでも十分」「${trademark}的にはこう見てる」\n- 悪い例: 「〜だと思う。${trademark}」（ただの装飾）\n- 使用は任意。1スレッドに0〜1回`
+    ? `\n- トレードマーク「${trademark}」は、話題と自然に結びつく時だけ使うこと\n- 無理に入れるくらいなら使わない方がいい\n- 使う場合は文中に溶け込ませること（文末にポンと置くのは禁止）\n- 良い例: 「${trademark}ペースでも十分」「${trademark}的にはこう見てる」\n- 悪い例: 「〜だと思う。${trademark}」（ただの装飾）\n- 使用は任意。自然なら複数回使ってもいい`
     : "\n- トレードマークなし";
 
   const trendFormatText = trendFormat
