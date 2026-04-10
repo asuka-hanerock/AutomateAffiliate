@@ -177,16 +177,58 @@ export default function AccountApiKeys({ accountId, onBack, embedded }: Props) {
         />
       </Field>
       <Field label="サービスアカウントJSON">
+        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+          <label
+            style={{
+              background: "#f0f0f0",
+              border: "1px solid #ccc",
+              borderRadius: 6,
+              padding: "8px 16px",
+              cursor: "pointer",
+              fontSize: 13,
+            }}
+          >
+            JSONファイルを選択
+            <input
+              type="file"
+              accept=".json"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const text = reader.result as string;
+                  try {
+                    JSON.parse(text);
+                    set("googleServiceAccountJson", text);
+                  } catch {
+                    alert("無効なJSONファイルです");
+                  }
+                };
+                reader.readAsText(file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {form.googleServiceAccountJson && (
+            <span
+              style={{ fontSize: 12, color: "#17bf63", alignSelf: "center" }}
+            >
+              設定済み
+            </span>
+          )}
+        </div>
         <textarea
           value={form.googleServiceAccountJson}
           onChange={(e) => set("googleServiceAccountJson", e.target.value)}
           style={{
             ...inputStyle,
-            minHeight: 80,
+            minHeight: 60,
             fontFamily: "monospace",
             fontSize: 12,
           }}
-          placeholder="JSONファイルの中身をペースト"
+          placeholder="または直接ペースト"
         />
       </Field>
 

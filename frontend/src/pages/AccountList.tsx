@@ -6,13 +6,25 @@ function formatSchedule(cronSchedule: string): string {
     const entries = JSON.parse(cronSchedule);
     if (!Array.isArray(entries)) return cronSchedule;
     return entries
-      .map((e: { days: number[]; time: string }) => {
-        const dayPart =
-          !e.days || e.days.length === 0
-            ? "毎日"
-            : e.days.map((d: number) => dayNames[d]).join("・");
-        return `${dayPart} ${e.time}`;
-      })
+      .map(
+        (e: {
+          mode?: string;
+          days?: number[];
+          time?: string;
+          postsPerDay?: number;
+          activeHoursStart?: number;
+          activeHoursEnd?: number;
+        }) => {
+          if (e.mode === "random") {
+            return `ランダム ${e.postsPerDay ?? 10}回/日`;
+          }
+          const dayPart =
+            !e.days || e.days.length === 0
+              ? "毎日"
+              : e.days.map((d: number) => dayNames[d]).join("・");
+          return `${dayPart} ${e.time ?? ""}`;
+        },
+      )
       .join("、");
   } catch {
     return cronSchedule;
