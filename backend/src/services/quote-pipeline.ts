@@ -3,6 +3,7 @@ import { decrypt } from "../utils/crypto";
 import { createClient, postQuote } from "./twitter";
 import Anthropic from "@anthropic-ai/sdk";
 import { notifyDiscord } from "./discord";
+import { recordClaudeUsage, recordXUsage } from "./api-usage";
 
 interface TweetData {
   id: string;
@@ -82,7 +83,7 @@ async function generateQuoteText(
   pronoun: string,
   profileBio: string,
   maxChars: number,
-): Promise<string> {
+): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
   const client = new Anthropic({ apiKey });
 
   const profileSection = profileBio
@@ -125,7 +126,11 @@ ${originalText}
 
   const block = response.content[0];
   if (block.type !== "text") throw new Error("Unexpected response type");
-  return block.text.trim();
+  return {
+    text: block.text.trim(),
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+  };
 }
 
 export interface QuotePipelineResult {
@@ -207,7 +212,7 @@ export async function runQuotePipeline(
 
   // 引用テキスト生成
   console.log("[QuotePipeline] 引用ポスト生成中...");
-  const quoteText = await generateQuoteText(
+  const quoteResult = await generateQuoteText(
     claudeKey,
     selectedTweet.text,
     account.niche,
@@ -215,12 +220,21 @@ export async function runQuotePipeline(
     account.profileBio,
     account.maxCharsPerPost,
   );
+  const quoteText = quoteResult.text;
   console.log(`[QuotePipeline] 生成完了: "${quoteText.substring(0, 50)}..."`);
+  await recordClaudeUsage(
+    accountId,
+    "generate_quote",
+    quoteResult.inputTokens,
+    quoteResult.outputTokens,
+  );
+  await recordXUsage(accountId, "read_timeline", 1);
 
   let tweetId: string | undefined;
   if (!dryRun) {
     console.log("[QuotePipeline] 引用ポスト投稿中...");
     tweetId = await postQuote(twitterCreds, quoteText, selectedTweet.id);
+    await recordXUsage(accountId, "post_quote", 1);
   } else {
     console.log("[QuotePipeline] テスト（投稿スキップ）");
   }

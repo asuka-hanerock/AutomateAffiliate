@@ -4,13 +4,15 @@ import AccountForm from "./pages/AccountForm";
 import AccountDetail from "./pages/AccountDetail";
 import SettingsPage from "./pages/SettingsPage";
 import ContentPage from "./pages/ContentPage";
+import UsageDashboard from "./pages/UsageDashboard";
 
 type View =
   | { page: "list" }
   | { page: "create" }
   | { page: "detail"; id: string }
   | { page: "settings"; id: string }
-  | { page: "content"; id: string };
+  | { page: "content"; id: string }
+  | { page: "usage"; id: string };
 
 export default function App() {
   const [view, setView] = useState<View>({ page: "list" });
@@ -62,6 +64,7 @@ export default function App() {
           onBack={() => setView({ page: "list" })}
           onSettings={(id) => setView({ page: "settings", id })}
           onContent={(id) => setView({ page: "content", id })}
+          onUsage={(id) => setView({ page: "usage", id })}
         />
       )}
       {view.page === "settings" && (
@@ -72,6 +75,12 @@ export default function App() {
       )}
       {view.page === "content" && (
         <ContentPage
+          accountId={view.id}
+          onBack={() => setView({ page: "detail", id: view.id })}
+        />
+      )}
+      {view.page === "usage" && (
+        <UsageDashboard
           accountId={view.id}
           onBack={() => setView({ page: "detail", id: view.id })}
         />

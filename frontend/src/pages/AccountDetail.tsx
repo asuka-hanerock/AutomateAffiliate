@@ -43,6 +43,7 @@ interface Props {
   onBack: () => void;
   onSettings: (id: string) => void;
   onContent: (id: string) => void;
+  onUsage: (id: string) => void;
 }
 
 const statusLabel: Record<string, { text: string; color: string }> = {
@@ -97,6 +98,7 @@ export default function AccountDetail({
   onBack,
   onSettings,
   onContent,
+  onUsage,
 }: Props) {
   const [account, setAccount] = useState<AccountData | null>(null);
   const [running, setRunning] = useState<"run" | "test" | false>(false);
@@ -780,6 +782,21 @@ export default function AccountDetail({
             }}
           >
             コンテンツ
+          </button>
+          <button
+            onClick={() => onUsage(accountId)}
+            style={{
+              background: "#fff",
+              border: "1px solid #d97706",
+              color: "#d97706",
+              borderRadius: 8,
+              padding: "10px 16px",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            利用料
           </button>
         </div>
 

@@ -6,6 +6,7 @@ import { selectPrompt } from "./prompt-selector";
 import { postThread } from "./twitter";
 import { appendPostLog } from "./sheets";
 import { notifyDiscord } from "./discord";
+import { recordClaudeUsage, recordXUsage } from "./api-usage";
 
 // 使用済み話題を直近30件保持（プロセス内メモリ）
 const usedTopics: string[] = [];
@@ -89,6 +90,11 @@ export async function runPipeline(
     try {
       tweetIds = await postThread(twitterCreds, posts, cta ?? undefined);
       console.log("[Pipeline] 投稿完了");
+      await recordXUsage(
+        accountId,
+        "post_thread",
+        posts.length + (cta ? 1 : 0),
+      );
     } catch (err) {
       status = "失敗";
       errorMsg = err instanceof Error ? err.message : "Unknown error";
@@ -136,6 +142,12 @@ export async function runPipeline(
   console.log(
     `[Pipeline] 話題: ${topic} (理由: ${topicResult.選定理由}, ソース: ${topicResult.ソース})`,
   );
+  await recordClaudeUsage(
+    accountId,
+    "select_topic",
+    topicResult.usage.inputTokens,
+    topicResult.usage.outputTokens,
+  );
 
   // 使用済みリストに追加
   usedTopics.push(topic);
@@ -182,6 +194,12 @@ export async function runPipeline(
   console.log(
     `[Pipeline] ${threadResult.posts.length}投稿を生成${threadResult.cta ? " + CTA" : ""}`,
   );
+  await recordClaudeUsage(
+    accountId,
+    "generate_thread",
+    threadResult.usage.inputTokens,
+    threadResult.usage.outputTokens,
+  );
 
   // previewモード: 生成結果を返して終了（投稿しない）
   if (options?.preview) {
@@ -221,6 +239,11 @@ export async function runPipeline(
         threadResult.cta,
       );
       console.log("[Pipeline] 投稿完了");
+      await recordXUsage(
+        accountId,
+        "post_thread",
+        threadResult.posts.length + (threadResult.cta ? 1 : 0),
+      );
     } catch (err) {
       status = "失敗";
       errorMsg = err instanceof Error ? err.message : "Unknown error";
